@@ -17,7 +17,7 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 .wrap{max-width:760px;margin:0 auto;padding:14px}
 h1{font-size:22px;margin:0}
 h3{margin:0 0 6px}
-.sub{color:var(--muted);font-size:12.5px;margin:2px 0 10px}
+.sub{color:var(--muted);font-size:12.5px;margin:2px 0 8px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .pill{font-size:11.5px;padding:3px 9px;border-radius:99px;background:#e3f2e5;color:var(--green);white-space:nowrap}
 .pill.off{background:#fdecea;color:var(--red)}
@@ -30,8 +30,12 @@ h3{margin:0 0 6px}
 .btn.sm{padding:7px 10px;font-size:13px}
 .btn.grow{flex:1}
 .chip{opacity:.55}.chip.on{opacity:1;background:var(--blue);color:#fff}
+.tabs{display:flex;gap:4px;margin:6px 0 10px;border-bottom:2px solid var(--line)}
+.tabs button{flex:1;border:0;background:none;padding:10px 4px;font-size:14.5px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px;font-family:inherit}
+.tabs button.on{color:var(--blue);border-bottom-color:var(--blue)}
 input,select,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;font-size:15px;font-family:inherit;background:#fff;color:var(--ink)}
 label{display:block;font-size:12px;color:var(--muted);margin:10px 0 3px}
+.inline{display:flex;gap:6px}.inline .btn{flex:none}
 .card{background:var(--card);border-radius:12px;padding:12px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .card .head{display:flex;gap:10px}
 .card img.th{width:64px;height:64px;object-fit:cover;border-radius:8px;flex:none;background:#eee}
@@ -39,11 +43,25 @@ label{display:block;font-size:12px;color:var(--muted);margin:10px 0 3px}
 .st-in{color:var(--green);font-weight:700;font-size:13px}.st-sold{color:var(--red);font-weight:700;font-size:13px}
 .card .d{color:#455a64;font-size:13px;line-height:1.5;margin:6px 0 8px;word-break:break-word}
 .card .acts{display:flex;gap:6px}.card .acts .btn{flex:1;padding:8px 4px;font-size:12.5px}
+.badge{display:inline-block;font-size:11px;background:#eef2f7;border-radius:6px;padding:1px 6px;margin-left:4px;color:var(--muted)}
 .empty{text-align:center;color:var(--muted);padding:30px 8px}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:50}
-.sheet{background:#fff;width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+.overlay.top{z-index:60}.overlay.top2{z-index:70}
+.sheet{background:#fff;width:100%;max-width:600px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
 @media(min-width:600px){.overlay{align-items:center}.sheet{border-radius:16px}}
-.prev{display:block;max-width:100%;max-height:180px;margin:8px 0;border-radius:8px}
+.thumbs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.th2{position:relative;width:76px;height:76px}
+.th2 img{width:100%;height:100%;object-fit:cover;border-radius:8px}
+.th2 button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:0;background:var(--red);color:#fff;font-size:13px;line-height:1;padding:0}
+.line{border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:8px;position:relative}
+.line .ld{padding-right:34px;font-size:14px}
+.line .lq{display:flex;align-items:center;gap:5px;margin-top:6px;font-size:13px;flex-wrap:wrap}
+.line .lq input{width:78px;padding:7px}
+.line .rm{position:absolute;top:6px;right:6px;padding:4px 9px}
+.pick{display:flex;gap:10px;align-items:flex-start;padding:8px 4px;border-bottom:1px solid var(--line);font-size:14px}
+.pick input{width:20px;height:20px;margin-top:2px;flex:none}
+.total{font-size:18px;font-weight:700;text-align:right;margin:8px 0}
+.foot{text-align:center;color:var(--muted);font-size:12px;margin:18px 0 70px}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#263238;color:#fff;padding:10px 16px;border-radius:9px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:99;max-width:90%;text-align:center}
 #toast.show{opacity:1}
 #login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -62,33 +80,56 @@ label{display:block;font-size:12px;color:var(--muted);margin:10px 0 3px}
     <label>Password</label><input id="l_pass" type="password" autocomplete="current-password" required>
     <div class="err" id="loginErr"></div>
     <button class="btn primary" style="width:100%;margin-top:8px" id="loginBtn">Login</button>
+    <div class="foot" style="margin:14px 0 0">Powered by Silicon Traders</div>
   </form>
 </div>
 
 <div id="app" class="hidden">
   <div class="wrap">
-    <div class="top">
-      <h1>HDD / SSD Manager</h1>
-      <span class="pill" id="sync">...</span>
-    </div>
+    <div class="top"><h1>HDD / SSD Manager</h1><span class="pill" id="sync">...</span></div>
     <div class="sub" id="who"></div>
-    <div class="summary" id="summary"></div>
     <div class="row">
       <button class="btn sm" data-act="shop">⚙ Shop</button>
       <button class="btn sm" data-act="backup">⬇ Backup</button>
       <button class="btn sm" data-act="restore">⬆ Restore</button>
       <button class="btn sm" data-act="logout">Logout</button>
     </div>
-    <div class="row" id="filters"></div>
-    <input id="q" placeholder="Search serial / model / capacity / buyer / invoice" style="margin-bottom:10px">
-    <div id="list"></div>
-    <div style="height:70px"></div>
+    <div class="tabs" id="tabs">
+      <button data-act="tab" data-v="stock">📦 Stock</button>
+      <button data-act="tab" data-v="bills">🧾 Bills</button>
+      <button data-act="tab" data-v="ew">♻ E-waste</button>
+    </div>
+
+    <section id="tab_stock">
+      <div class="summary" id="summary"></div>
+      <div class="row" id="filters"></div>
+      <div class="inline" style="margin-bottom:10px"><input id="q" placeholder="Search serial / model / capacity / buyer / invoice"><button class="btn" data-act="scansearch" title="Barcode scan">📷</button></div>
+      <div id="list"></div>
+    </section>
+
+    <section id="tab_bills" class="hidden">
+      <div class="summary" id="billSummary"></div>
+      <div id="billList"></div>
+    </section>
+
+    <section id="tab_ew" class="hidden">
+      <div class="summary" id="ewSummary"></div>
+      <div class="row">
+        <button class="btn sm grow" data-act="ewbill">🧾 Scrap bill banao</button>
+        <button class="btn sm grow" data-act="seedcats">+ Common categories</button>
+      </div>
+      <div id="ewList"></div>
+    </section>
+
+    <div class="foot">Powered by Silicon Traders • v2</div>
   </div>
-  <button class="btn primary fab" data-act="add">+ Add Drive</button>
+  <button class="btn primary fab" id="fab" data-act="fab">+ Add Drive</button>
   <input type="file" id="restoreFile" accept=".json,application/json" class="hidden">
 </div>
 
 <div id="modal"></div>
+<div id="sub"></div>
+<div id="scanner"></div>
 <div id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -110,89 +151,97 @@ const KINDS = ["HDD", "SSD", "NVMe SSD", "External HDD", "Other"];
 const CONDITIONS = ["New", "Excellent", "Good", "Average", "Faulty / For parts"];
 const PAYMENTS = ["Cash", "UPI", "Card", "Bank transfer", "Credit / Due"];
 const FILTERS = ["All", "In Stock", "Sold"];
+const COMMON_CATS = ["RAM", "Processor", "TV kit / TV board", "Motherboard", "SMPS / PSU", "Mobile board", "Hard disk scrap", "Cable / wire", "Battery", "Other scrap"];
+const MAX_PHOTOS = 5, PHOTO_MAX = 150000;
+const ZX_URL = "https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js";
+const TESS_URL = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const num = v => parseFloat(v) || 0;
 const m0 = n => Math.round(n).toLocaleString("en-IN");
-const m2 = n => n.toFixed(2);
+const m2 = n => (Math.round(n * 100) / 100).toFixed(2);
+const fq = n => String(Math.round(n * 1000) / 1000);
 const today = () => { const d = new Date(); return String(d.getDate()).padStart(2, "0") + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + d.getFullYear(); };
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const opts = (list, sel) => list.map(o => `<option${o === sel ? " selected" : ""}>${esc(o)}</option>`).join("");
-function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 3500); }
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 4000); }
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
+const loaded = {};
+function loadScript(url) {
+  if (loaded[url]) return loaded[url];
+  return loaded[url] = new Promise((res, rej) => { const s = document.createElement("script"); s.src = url; s.onload = res; s.onerror = () => { delete loaded[url]; rej(new Error("load failed")); }; document.head.appendChild(s); });
+}
 
 let app, auth, db;
-let user = null, items = [], filter = "All", query = "", editPhoto = "", editing = null;
+let user = null, items = [], bills = [], ewaste = [], filter = "All", query = "", tab = "stock";
+let editPhotos = [], editing = null, draft = null, restoreData = null;
 let shop = { name: "", address: "", phone: "", gstin: "", gstPercent: "", prefix: "INV-", nextNo: 1 };
-let unsubItems = null, unsubShop = null, pendingWrites = false;
+let unsubs = [], pendingWrites = false;
 
 function blankItem() {
-  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-  return { id, createdAt: Date.now(), kind: "HDD", brandModel: "", capacity: "", serial: "", health: "", hours: "", condition: "Good", warranty: "", buyPrice: "", sellPrice: "", status: "In Stock", photo: "", buyer: "", notes: "", buyerPhone: "", payment: "Cash", soldDate: "", invoiceNo: "" };
+  return { id: newId(), createdAt: Date.now(), kind: "HDD", brandModel: "", capacity: "", serial: "", health: "", hours: "", condition: "Good", warranty: "", buyPrice: "", sellPrice: "", status: "In Stock", photo: "", photos: [], buyer: "", notes: "", buyerPhone: "", payment: "Cash", soldDate: "", invoiceNo: "" };
 }
 function normalize(o) {
-  const b = blankItem();
-  const r = { ...b };
-  for (const k of Object.keys(b)) if (o[k] !== undefined && o[k] !== null) r[k] = k === "createdAt" ? Number(o[k]) || b.createdAt : (typeof b[k] === "number" ? Number(o[k]) : String(o[k]));
+  const b = blankItem(), r = { ...b };
+  for (const k of Object.keys(b)) {
+    if (k === "photos" || o[k] === undefined || o[k] === null) continue;
+    r[k] = k === "createdAt" ? (Number(o[k]) || b.createdAt) : String(o[k]);
+  }
   r.id = String(o.id || b.id);
-  if (!String(r.photo).startsWith("data:image")) r.photo = "";
+  const ph = Array.isArray(o.photos) ? o.photos : (o.photo ? [o.photo] : []);
+  r.photos = ph.filter(p => typeof p === "string" && p.startsWith("data:image")).slice(0, MAX_PHOTOS);
+  r.photo = r.photos[0] || "";
   if (!o.createdAt && Number(o.id)) r.createdAt = Number(o.id);
   return r;
 }
+function normBill(o) {
+  return { id: String(o.id || newId()), createdAt: Number(o.createdAt) || Date.now(), invoiceNo: String(o.invoiceNo || ""), date: String(o.date || today()),
+    buyer: String(o.buyer || ""), buyerPhone: String(o.buyerPhone || ""), payment: String(o.payment || "Cash"), notes: String(o.notes || ""),
+    showPhotos: o.showPhotos !== false, total: Number(o.total) || 0,
+    lines: (Array.isArray(o.lines) ? o.lines : []).map(l => ({ t: l.t || "custom", driveId: l.driveId || "", catId: l.catId || "", desc: String(l.desc || ""), spec: String(l.spec || ""),
+      serial: String(l.serial || ""), unit: String(l.unit || "pc"), qty: Number(l.qty) || 0, rate: Number(l.rate) || 0 })) };
+}
+const normEw = o => ({ id: String(o.id || newId()), name: String(o.name || ""), unit: o.unit === "kg" ? "kg" : "pc", rate: Number(o.rate) || 0, updatedAt: Number(o.updatedAt) || Date.now() });
+const billTotal = lines => Math.round(lines.reduce((a, l) => a + (+l.qty || 0) * (+l.rate || 0), 0) * 100) / 100;
+const billOfDrive = id => bills.find(b => b.lines.some(l => l.driveId === id));
 
 // ---------- init ----------
 try {
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
-} catch (e) {
-  document.body.innerHTML = "<p style='padding:20px'>Firebase config error: " + esc(e.message) + "</p>";
-}
+} catch (e) { document.body.innerHTML = "<p style='padding:20px'>Firebase config error: " + esc(e.message) + "</p>"; }
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(() => {});
 
 function authMsg(code) {
-  if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found" || code === "auth/invalid-email") return "Email ya password galat hai.";
+  if (["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found", "auth/invalid-email"].includes(code)) return "Email ya password galat hai.";
   if (code === "auth/network-request-failed") return "Internet nahi hai. Pehli baar login ke liye internet chahiye.";
   if (code === "auth/too-many-requests") return "Bahut baar galat try kiya. Thodi der baad try karo.";
-  if (code === "auth/api-key-not-valid.-please-pass-a-valid-api-key." || code === "auth/invalid-api-key") return "API key galat hai (config check karo).";
   return "Login nahi hua: " + code;
 }
-
 $("#loginForm").addEventListener("submit", async e => {
-  e.preventDefault();
-  $("#loginErr").textContent = ""; $("#loginBtn").disabled = true;
+  e.preventDefault(); $("#loginErr").textContent = ""; $("#loginBtn").disabled = true;
   try { await signInWithEmailAndPassword(auth, $("#l_email").value.trim(), $("#l_pass").value); }
   catch (err) { $("#loginErr").textContent = authMsg(err.code); }
   $("#loginBtn").disabled = false;
 });
-
 onAuthStateChanged(auth, u => {
   user = u;
-  if (u) {
-    $("#login").classList.add("hidden"); $("#app").classList.remove("hidden");
-    $("#who").textContent = u.email;
-    startListeners();
-  } else {
-    stopListeners();
-    $("#app").classList.add("hidden"); $("#login").classList.remove("hidden");
-  }
+  if (u) { $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); $("#who").textContent = u.email; startListeners(); }
+  else { stopListeners(); $("#app").classList.add("hidden"); $("#login").classList.remove("hidden"); }
 });
-
 function startListeners() {
   stopListeners();
-  unsubItems = onSnapshot(collection(db, "drives"), snap => {
-    items = snap.docs.map(d => normalize(d.data()));
-    pendingWrites = snap.metadata.hasPendingWrites;
-    render(); updateSync();
-  }, err => toast("Sync error: " + err.code));
-  unsubShop = onSnapshot(doc(db, "settings", "shop"), s => {
-    if (s.exists()) shop = { ...shop, ...s.data() };
-  });
+  const watch = (name, fn) => unsubs.push(onSnapshot(collection(db, name), snap => { fn(snap.docs.map(d => d.data())); pendingWrites = snap.metadata.hasPendingWrites; render(); updateSync(); }, err => toast("Sync error: " + err.code)));
+  watch("drives", a => { items = a.map(normalize); });
+  watch("bills", a => { bills = a.map(normBill); });
+  watch("ewaste", a => { ewaste = a.map(normEw).sort((x, y) => x.name.localeCompare(y.name)); });
+  unsubs.push(onSnapshot(doc(db, "settings", "shop"), s => { if (s.exists()) shop = { ...shop, ...s.data() }; }));
   updateSync();
 }
-function stopListeners() { if (unsubItems) unsubItems(); if (unsubShop) unsubShop(); unsubItems = unsubShop = null; items = []; render(); }
-
+function stopListeners() { unsubs.forEach(u => u()); unsubs = []; items = []; bills = []; ewaste = []; render(); }
 function updateSync() {
   const p = $("#sync");
   if (!navigator.onLine) { p.textContent = "Offline"; p.className = "pill off"; }
@@ -201,108 +250,252 @@ function updateSync() {
 }
 addEventListener("online", updateSync); addEventListener("offline", updateSync);
 
-// ---------- list ----------
+// ---------- render ----------
 function render() {
-  const fl = $("#filters");
-  fl.innerHTML = FILTERS.map(f => `<button class="btn sm grow chip${f === filter ? " on" : ""}" data-act="filter" data-v="${f}">${f}</button>`).join("");
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.v === tab));
+  $("#tab_stock").classList.toggle("hidden", tab !== "stock");
+  $("#tab_bills").classList.toggle("hidden", tab !== "bills");
+  $("#tab_ew").classList.toggle("hidden", tab !== "ew");
+  $("#fab").textContent = tab === "stock" ? "+ Add Drive" : tab === "bills" ? "+ New Bill" : "+ Category";
+  if (tab === "stock") renderStock(); else if (tab === "bills") renderBills(); else renderEw();
+}
+function renderStock() {
+  $("#filters").innerHTML = FILTERS.map(f => `<button class="btn sm grow chip${f === filter ? " on" : ""}" data-act="filter" data-v="${f}">${f}</button>`).join("");
   const inStock = items.filter(i => i.status === "In Stock"), sold = items.filter(i => i.status === "Sold");
   const stockCost = inStock.reduce((a, i) => a + num(i.buyPrice), 0);
-  const revenue = sold.reduce((a, i) => a + num(i.sellPrice), 0);
-  const profit = revenue - sold.reduce((a, i) => a + num(i.buyPrice), 0);
-  $("#summary").innerHTML = `Total: <b>${items.length}</b> &nbsp; In stock: <b>${inStock.length}</b> &nbsp; Sold: <b>${sold.length}</b><br>Stock value (cost): <b>₹${m0(stockCost)}</b><br>Sales: <b>₹${m0(revenue)}</b> &nbsp; Profit: <b>₹${m0(profit)}</b>`;
+  const dRev = sold.reduce((a, i) => a + num(i.sellPrice), 0);
+  const eRev = bills.reduce((a, b) => a + b.lines.filter(l => l.t !== "drive").reduce((x, l) => x + l.qty * l.rate, 0), 0);
+  const profit = dRev - sold.reduce((a, i) => a + num(i.buyPrice), 0);
+  $("#summary").innerHTML = `Total: <b>${items.length}</b> &nbsp; In stock: <b>${inStock.length}</b> &nbsp; Sold: <b>${sold.length}</b><br>Stock value (cost): <b>₹${m0(stockCost)}</b><br>Drive sales: <b>₹${m0(dRev)}</b> &nbsp; Profit: <b>₹${m0(profit)}</b><br>E-waste / other sales: <b>₹${m0(eRev)}</b>`;
   const q = query.trim().toLowerCase();
   const list = items.filter(i => (filter === "All" || i.status === filter) &&
-    (!q || [i.serial, i.brandModel, i.capacity, i.kind, i.status, i.buyer, i.invoiceNo].some(s => String(s).toLowerCase().includes(q))))
-    .sort((a, b) => b.createdAt - a.createdAt);
-  $("#list").innerHTML = list.length ? list.map(card).join("") :
-    `<div class="empty">${items.length ? "Koi drive nahi mila." : "Abhi koi drive nahi hai. + Add Drive dabao."}</div>`;
+    (!q || [i.serial, i.brandModel, i.capacity, i.kind, i.status, i.buyer, i.invoiceNo].some(s => String(s).toLowerCase().includes(q)))).sort((a, b) => b.createdAt - a.createdAt);
+  $("#list").innerHTML = list.length ? list.map(card).join("") : `<div class="empty">${items.length ? "Koi drive nahi mila." : "Abhi koi drive nahi hai. + Add Drive dabao."}</div>`;
 }
-
 function card(i) {
-  const margin = num(i.sellPrice) - num(i.buyPrice);
-  const isSold = i.status === "Sold";
+  const margin = num(i.sellPrice) - num(i.buyPrice), sold = i.status === "Sold";
   return `<div class="card">
     <div class="head">${i.photo ? `<img class="th" loading="lazy" src="${i.photo}" alt="">` : ""}
       <div><div class="t">${esc(i.kind)} • ${esc(i.brandModel || "Unnamed")} • ${esc(i.capacity)}</div>
-      <div class="${isSold ? "st-sold" : "st-in"}">${esc(i.status)}${isSold && i.soldDate ? " • " + esc(i.soldDate) : ""}</div></div></div>
+      <div class="${sold ? "st-sold" : "st-in"}">${esc(i.status)}${sold && i.soldDate ? " • " + esc(i.soldDate) : ""}${i.photos.length > 1 ? `<span class="badge">📷 ${i.photos.length}</span>` : ""}</div></div></div>
     <div class="d">Serial: ${esc(i.serial || "Not entered")}<br>
       Health: ${esc(i.health || "—")}% | Power-on: ${esc(i.hours || "—")} hrs | ${esc(i.condition)}<br>
       Buy: ₹${esc(i.buyPrice || "0")} | Sell: ₹${esc(i.sellPrice || "0")} | Margin: ₹${m0(margin)}
-      ${isSold ? `<br>Buyer: ${esc(i.buyer || "—")}${i.invoiceNo ? " | " + esc(i.invoiceNo) : ""}` : ""}</div>
+      ${sold ? `<br>Buyer: ${esc(i.buyer || "—")}${i.invoiceNo ? " | " + esc(i.invoiceNo) : ""}` : ""}</div>
     <div class="acts">
       <button class="btn" data-act="edit" data-id="${i.id}">Edit</button>
-      <button class="btn" data-act="invoice" data-id="${i.id}">Invoice</button>
-      <button class="btn" data-act="${isSold ? "stock" : "sell"}" data-id="${i.id}">${isSold ? "Mark Stock" : "Mark Sold"}</button>
+      ${sold ? `<button class="btn" data-act="invoice" data-id="${i.id}">Invoice</button><button class="btn" data-act="stock" data-id="${i.id}">Mark Stock</button>`
+             : `<button class="btn primary" data-act="sell" data-id="${i.id}">Sell / Bill</button>`}
       <button class="btn danger" data-act="del" data-id="${i.id}">Delete</button>
     </div></div>`;
 }
-
+function renderBills() {
+  const tot = bills.reduce((a, b) => a + b.total, 0);
+  $("#billSummary").innerHTML = `Total bills: <b>${bills.length}</b> &nbsp; Total sale: <b>₹${m0(tot)}</b>`;
+  const list = [...bills].sort((a, b) => b.createdAt - a.createdAt);
+  $("#billList").innerHTML = list.length ? list.map(b => {
+    const nd = b.lines.filter(l => l.t === "drive").length, ne = b.lines.length - nd;
+    return `<div class="card"><div class="t">${esc(b.invoiceNo || "(number pending)")} • ₹${m0(b.total)}</div>
+      <div class="d">${esc(b.date)} • ${esc(b.buyer || "Walk-in")}${b.buyerPhone ? " • " + esc(b.buyerPhone) : ""}<br>${nd} drive, ${ne} other item • ${esc(b.payment)}</div>
+      <div class="acts"><button class="btn primary" data-act="billpdf" data-id="${b.id}">Invoice PDF</button>
+      <button class="btn" data-act="billedit" data-id="${b.id}">Edit</button>
+      <button class="btn danger" data-act="billdel" data-id="${b.id}">Delete</button></div></div>`;
+  }).join("") : `<div class="empty">Abhi koi bill nahi. + New Bill dabao.</div>`;
+}
+function renderEw() {
+  const tot = bills.reduce((a, b) => a + b.lines.filter(l => l.t === "ewaste").reduce((x, l) => x + l.qty * l.rate, 0), 0);
+  $("#ewSummary").innerHTML = `Categories: <b>${ewaste.length}</b> &nbsp; E-waste sales: <b>₹${m0(tot)}</b><div class="sub" style="margin:4px 0 0">Rate yahan update karo; bill mein category chunte hi rate khud aa jayega.</div>`;
+  $("#ewList").innerHTML = ewaste.length ? ewaste.map(c => `<div class="card"><div class="head" style="justify-content:space-between;align-items:center">
+      <div><div class="t">${esc(c.name)}</div><div class="sub" style="margin:0">₹${esc(fq(c.rate))} per ${c.unit}</div></div>
+      <button class="btn" data-act="catedit" data-id="${c.id}">Rate / Edit</button></div></div>`).join("")
+    : `<div class="empty">Koi category nahi. + Category dabao ya "Common categories" se jodo.</div>`;
+}
 $("#q").addEventListener("input", e => { query = e.target.value; render(); });
 
-// ---------- modal ----------
-function openModal(html) {
-  const m = $("#modal");
-  m.innerHTML = `<div class="overlay"><div class="sheet">${html}</div></div>`;
-  m.querySelector(".overlay").addEventListener("mousedown", e => { if (e.target.classList.contains("overlay")) closeModal(); });
+// ---------- modals ----------
+function layer(sel, cls, html) {
+  const m = $(sel); m.innerHTML = `<div class="overlay ${cls}"><div class="sheet">${html}</div></div>`;
+  m.querySelector(".overlay").addEventListener("mousedown", e => { if (e.target.classList.contains("overlay")) { if (sel === "#modal") closeModal(); else if (sel === "#sub") closeSub(); } });
 }
-function closeModal() { $("#modal").innerHTML = ""; editPhoto = ""; editing = null; }
-
+const openModal = h => layer("#modal", "", h);
+const openSub = h => layer("#sub", "top", h);
+function closeSub() { $("#sub").innerHTML = ""; }
+function closeModal() { $("#modal").innerHTML = ""; $("#sub").innerHTML = ""; editPhotos = []; editing = null; draft = null; }
 function putItem(item) {
-  item.updatedAt = Date.now(); item.updatedBy = user ? user.email : "";
+  item.updatedAt = Date.now(); item.updatedBy = user ? user.email : ""; item.photo = (item.photos || [])[0] || "";
   return setDoc(doc(db, "drives", item.id), item).catch(e => toast("Save error: " + (e.code || e.message)));
 }
 
-// ---------- editor ----------
+// ---------- images, barcode, OCR ----------
+async function toBitmap(file) {
+  try { return await createImageBitmap(file, { imageOrientation: "from-image" }); }
+  catch { return await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file); }); }
+}
+async function compressBitmap(bmp) {
+  const w0 = bmp.width || bmp.naturalWidth, h0 = bmp.height || bmp.naturalHeight;
+  let max = 640, out = "";
+  for (let t = 0; t < 4; t++) {
+    const s = Math.min(1, max / Math.max(w0, h0)), c = document.createElement("canvas");
+    c.width = Math.round(w0 * s); c.height = Math.round(h0 * s);
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    let q = 0.6; out = c.toDataURL("image/jpeg", q);
+    while (out.length > PHOTO_MAX && q > 0.32) { q -= 0.08; out = c.toDataURL("image/jpeg", q); }
+    if (out.length <= PHOTO_MAX) break;
+    max = Math.round(max * 0.8);
+  }
+  return out;
+}
+async function detectBarcodes(bmp) {
+  if ("BarcodeDetector" in window) { try { const r = await new BarcodeDetector().detect(bmp); if (r.length) return r.map(x => x.rawValue); } catch {} }
+  try {
+    await loadScript(ZX_URL);
+    const c = document.createElement("canvas"); c.width = bmp.width || bmp.naturalWidth; c.height = bmp.height || bmp.naturalHeight;
+    c.getContext("2d").drawImage(bmp, 0, 0);
+    const res = await new window.ZXing.BrowserMultiFormatReader().decodeFromImageUrl(c.toDataURL("image/jpeg", 0.92));
+    return [res.getText()];
+  } catch { return []; }
+}
+function scanBarcode() {
+  return new Promise(async resolve => {
+    let stream = null, stopped = false;
+    const stop = v => { stopped = true; if (stream) stream.getTracks().forEach(t => t.stop()); $("#scanner").innerHTML = ""; resolve(v); };
+    $("#scanner").innerHTML = `<div class="overlay top2"><div class="sheet"><h3>Barcode scan karo</h3>
+      <video id="scanVideo" playsinline muted autoplay style="width:100%;border-radius:10px;background:#000;max-height:50vh"></video>
+      <div class="sub">Barcode ko camera ke saamne seedha rakho.</div><button class="btn grow" style="width:100%" id="scanCancel">Cancel</button></div></div>`;
+    $("#scanCancel").onclick = () => stop(null);
+    const video = $("#scanVideo");
+    try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false }); video.srcObject = stream; await video.play(); }
+    catch { toast("Camera permission nahi mili"); stop(null); return; }
+    if ("BarcodeDetector" in window) {
+      const det = new BarcodeDetector();
+      const loop = async () => { if (stopped) return; try { const r = await det.detect(video); if (r.length) { stop(r[0].rawValue); return; } } catch {} setTimeout(loop, 200); };
+      loop();
+    } else {
+      try { await loadScript(ZX_URL); } catch { toast("Scanner load nahi hua (internet chahiye)"); stop(null); return; }
+      const reader = new window.ZXing.BrowserMultiFormatReader(), c = document.createElement("canvas");
+      const loop = async () => {
+        if (stopped) return;
+        try { c.width = video.videoWidth; c.height = video.videoHeight; c.getContext("2d").drawImage(video, 0, 0); const r = await reader.decodeFromImageUrl(c.toDataURL("image/jpeg", 0.85)); stop(r.getText()); return; } catch {}
+        setTimeout(loop, 350);
+      };
+      loop();
+    }
+  });
+}
+function ocrCanvas(bmp) {
+  const w0 = bmp.width || bmp.naturalWidth, h0 = bmp.height || bmp.naturalHeight, s = Math.min(2, 1800 / Math.max(w0, h0));
+  const c = document.createElement("canvas"); c.width = Math.round(w0 * s); c.height = Math.round(h0 * s);
+  const ctx = c.getContext("2d"); ctx.filter = "grayscale(1) contrast(1.3)"; ctx.drawImage(bmp, 0, 0, c.width, c.height);
+  return c;
+}
+async function runOCR(bmp, progress) {
+  await loadScript(TESS_URL);
+  const worker = await window.Tesseract.createWorker("eng", 1, { logger: m => { if (m.status === "recognizing text") progress(Math.round(m.progress * 100)); } });
+  try { const r = await worker.recognize(ocrCanvas(bmp)); return r.data.text; } finally { await worker.terminate(); }
+}
+const STD_GB = [16, 32, 40, 60, 64, 80, 120, 128, 160, 200, 240, 250, 256, 320, 400, 480, 500, 512, 640, 750, 960, 1000, 2000, 3000, 4000, 5000, 6000, 8000, 10000];
+function normCap(val, unit) {
+  let gb = parseFloat(String(val).replace(",", ".")); if (!gb) return "";
+  if (/^t/i.test(unit)) gb *= 1000;
+  let best = 0, bd = 9;
+  for (const s of STD_GB) { const d = Math.min(Math.abs(Math.log(gb / s)), Math.abs(Math.log(gb / 0.931 / s))); if (d < bd) { bd = d; best = s; } }
+  if (bd > 0.1) return "";
+  return best >= 1000 ? (best / 1000) + "TB" : best + "GB";
+}
+const BRANDS = [[/seagate|\bST\d{3,5}[A-Z]{2}\d{3}/i, "Seagate"], [/western\s*digital|\bWDC?\b|\bWD\d{3,5}[A-Z]{3,4}/i, "WD"], [/toshiba|\bMQ0\d|\bMK\d{4}/i, "Toshiba"],
+  [/samsung/i, "Samsung"], [/hgst|hitachi/i, "HGST"], [/crucial/i, "Crucial"], [/kingston/i, "Kingston"], [/sandisk/i, "SanDisk"], [/intel/i, "Intel"],
+  [/transcend/i, "Transcend"], [/adata/i, "ADATA"], [/lexar/i, "Lexar"], [/micron/i, "Micron"], [/fujitsu/i, "Fujitsu"], [/maxtor/i, "Maxtor"], [/\bHTS\d{6}/i, "HGST"]];
+function parseLabel(raw) {
+  const t = String(raw || "").replace(/\r/g, ""), out = {};
+  let m = t.match(/health[^\n\d]{0,25}(\d{1,3})\s*%/i); if (m && +m[1] <= 100) out.health = m[1];
+  m = t.match(/power\s*on\s*time[^\d\n]{0,15}(\d+)\s*days?[^\d\n]{0,6}(\d+)?\s*hours?/i);
+  if (m) out.hours = String(+m[1] * 24 + (+m[2] || 0));
+  else { m = t.match(/power\s*on\s*hours?[^\d\n]{0,25}(\d[\d,]*)/i); if (m) out.hours = m[1].replace(/,/g, ""); }
+  const sn = [...t.matchAll(/(?:serial\s*(?:number|no\.?|#)?|s\/?n|\bsn)\s*[:#.\-]?\s*([A-Z0-9][A-Z0-9\-]{5,23})/gi)].map(x => x[1]).find(x => /\d/.test(x));
+  if (sn) out.serial = sn.toUpperCase();
+  m = t.match(/(?:model\s*(?:number|no\.?|name)?|m\/n)\s*[:#.\-]?\s*([A-Z0-9][A-Za-z0-9\-\/. ]{3,34})/i);
+  let model = m ? m[1].split(/\s{2,}|\n/)[0].trim() : "";
+  if (!model) { const k = t.match(/\b(ST\d{3,5}[A-Z]{2}\d{3}|WD\d{3,5}[A-Z]{3,4}(?:-[A-Z0-9]+)?|MQ\d{2}[A-Z]{3}\d{3}|HTS\d{6}[A-Z0-9]*|MZ[A-Z0-9\-]{6,12})\b/); if (k) model = k[1]; }
+  let brand = "", brandRe = null; for (const [re, name] of BRANDS) if (re.test(t + " " + model)) { brand = name; brandRe = re; break; }
+  if (!model && brandRe) { const ln = t.split("\n").find(l => brandRe.test(l)); if (ln) model = ln.replace(/\d+(?:[.,]\d+)?\s*(?:GB|TB)/gi, "").replace(/\s+/g, " ").trim().slice(0, 40); }
+  if (model || brand) out.model = ((brand && !model.toLowerCase().startsWith(brand.toLowerCase()) ? brand + " " : "") + model).trim();
+  for (const c of t.matchAll(/(\d{1,5}(?:[.,]\d{1,3})?)\s*(GB|TB)\b/gi)) { const cap = normCap(c[1], c[2]); if (cap) { out.capacity = cap; break; } }
+  if (/nvme|m\.?2/i.test(t)) out.kind = "NVMe SSD";
+  else if (/external|portable|passport|expansion|elements/i.test(t)) out.kind = "External HDD";
+  else if (/\bssd\b|solid\s*state/i.test(t)) out.kind = "SSD";
+  else if (/\bhdd\b|rpm|5400|7200|hard\s*(disk|drive)|\bST\d{3,5}[A-Z]{2}\d{3}/i.test(t)) out.kind = "HDD";
+  return out;
+}
+
+// ---------- drive editor ----------
+function renderThumbs() {
+  const t = $("#f_thumbs"); if (!t) return;
+  t.innerHTML = editPhotos.map((p, i) => `<div class="th2"><img src="${p}" alt=""><button data-act="rmph" data-i="${i}">×</button></div>`).join("") || `<div class="sub">Koi photo nahi.</div>`;
+}
 function openEditor(id) {
   const it = id ? items.find(x => x.id === id) : null;
-  editing = it; const d = it || blankItem();
-  editPhoto = d.photo;
+  editing = it; const d = it || blankItem(); editPhotos = [...d.photos];
   const f = (id, label, val, ph = "", extra = "") => `<label>${label}</label><input id="${id}" value="${esc(val)}" placeholder="${esc(ph)}" ${extra}>`;
   openModal(`<h3>${it ? "Drive edit karo" : "Naya drive"}</h3>
+    <button class="btn primary" style="width:100%" data-act="labelscan">🔍 Label / SMART screenshot scan (auto-fill)</button>
+    <div class="sub" id="scanStatus">Label ya CrystalDiskInfo screenshot ki photo lo: model, serial, capacity, health, hours khud bhar jayenge.</div>
     <label>Drive type</label><select id="f_kind">${opts(KINDS, d.kind)}</select>
     ${f("f_model", "Brand / Model", d.brandModel, "Seagate / WD / Samsung ...")}
     ${f("f_capacity", "Capacity", d.capacity, "500GB, 1TB")}
-    ${f("f_serial", "Serial number", d.serial, "Label dekhkar likho", 'autocapitalize="characters"')}
+    <label>Serial number</label><div class="inline"><input id="f_serial" value="${esc(d.serial)}" placeholder="Barcode scan ya haath se" autocapitalize="characters"><button class="btn" data-act="scanserial">📷 Scan</button></div>
     ${f("f_health", "Health %", d.health, "0 - 100", 'inputmode="decimal"')}
     ${f("f_hours", "Power-on hours", d.hours, "", 'inputmode="numeric"')}
     <label>Condition</label><select id="f_cond">${opts(CONDITIONS, d.condition)}</select>
     ${f("f_warranty", "Warranty", d.warranty, "30 days / No warranty")}
     ${f("f_buy", "Purchase price ₹", d.buyPrice, "", 'inputmode="decimal"')}
     ${f("f_sell", "Selling price ₹", d.sellPrice, "", 'inputmode="decimal"')}
-    ${f("f_buyer", "Buyer / customer (optional)", d.buyer)}
     ${f("f_notes", "Notes / defects (optional)", d.notes)}
-    <label>Drive photo</label>
-    <img id="f_prev" class="prev ${d.photo ? "" : "hidden"}" src="${d.photo}" alt="">
+    <label>Photos (max ${MAX_PHOTOS})</label>
+    <div class="thumbs" id="f_thumbs"></div>
     <div class="row">
       <button class="btn sm grow" data-act="cam">📷 Camera</button>
-      <button class="btn sm grow" data-act="gal">🖼 Gallery</button>
-      <button class="btn sm" data-act="rmphoto">Remove</button>
+      <button class="btn sm grow" data-act="gal">🖼 Gallery (multiple)</button>
     </div>
     <input type="file" id="f_cam" accept="image/*" capture="environment" class="hidden">
-    <input type="file" id="f_gal" accept="image/*" class="hidden">
+    <input type="file" id="f_gal" accept="image/*" multiple class="hidden">
+    <input type="file" id="f_scan" accept="image/*" class="hidden">
     <div class="row" style="margin-top:12px">
       <button class="btn grow" data-act="closeModal">Cancel</button>
       <button class="btn primary grow" data-act="saveEditor">Save</button>
     </div>`);
+  renderThumbs();
   for (const id of ["f_cam", "f_gal"]) $("#" + id).addEventListener("change", async e => {
-    const file = e.target.files[0]; if (!file) return;
-    try { editPhoto = await compress(file); showPrev(); } catch { toast("Photo padh nahi paya"); }
-    e.target.value = "";
+    const files = [...e.target.files]; e.target.value = "";
+    for (const file of files) {
+      if (editPhotos.length >= MAX_PHOTOS) { toast("Max " + MAX_PHOTOS + " photos"); break; }
+      try { editPhotos.push(await compressBitmap(await toBitmap(file))); renderThumbs(); } catch { toast("Photo padh nahi paya"); }
+    }
   });
+  $("#f_scan").addEventListener("change", e => { const file = e.target.files[0]; e.target.value = ""; if (file) labelScan(file); });
 }
-function showPrev() { const p = $("#f_prev"); if (!p) return; p.src = editPhoto || ""; p.classList.toggle("hidden", !editPhoto); }
 
-async function compress(file) {
-  let bmp;
-  try { bmp = await createImageBitmap(file, { imageOrientation: "from-image" }); }
-  catch { bmp = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file); }); }
-  const w0 = bmp.width || bmp.naturalWidth, h0 = bmp.height || bmp.naturalHeight;
-  const s = Math.min(1, 640 / Math.max(w0, h0));
-  const c = document.createElement("canvas"); c.width = Math.round(w0 * s); c.height = Math.round(h0 * s);
-  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
-  let q = 0.6, out = c.toDataURL("image/jpeg", q);
-  while (out.length > 600000 && q > 0.3) { q -= 0.1; out = c.toDataURL("image/jpeg", q); }
-  return out;
+async function labelScan(file) {
+  const status = m => { const s = $("#scanStatus"); if (s) s.textContent = m; };
+  try {
+    status("Photo taiyar ho rahi hai…");
+    const bmp = await toBitmap(file);
+    if (editPhotos.length < MAX_PHOTOS) { editPhotos.push(await compressBitmap(bmp)); renderThumbs(); }
+    status("Barcode dhoondh raha hoon…");
+    const codes = await detectBarcodes(bmp);
+    status("OCR chal raha hai (pehli baar 1-2 minute lag sakte hain, internet chahiye)…");
+    let text = "", ocrFailed = false;
+    try { text = await runOCR(bmp, p => status("OCR " + p + "%")); } catch { ocrFailed = true; }
+    const info = parseLabel(text), found = [];
+    const setIf = (id, val, label) => { const el = $("#" + id); if (el && val && !el.value.trim()) { el.value = val; found.push(label + ": " + val); } };
+    const serialCode = codes.find(c => /^[A-Za-z0-9\-]{6,25}$/.test(c) && /\d/.test(c) && !/^\d{12,14}$/.test(c));
+    setIf("f_serial", (serialCode || info.serial || "").toUpperCase(), "Serial");
+    setIf("f_model", info.model, "Model"); setIf("f_capacity", info.capacity, "Capacity");
+    setIf("f_health", info.health, "Health"); setIf("f_hours", info.hours, "Hours");
+    if (info.kind && $("#f_kind")) { $("#f_kind").value = info.kind; found.push("Type: " + info.kind); }
+    const prod = codes.find(c => /^\d{12,14}$/.test(c));
+    if (prod && $("#f_notes") && !$("#f_notes").value.trim()) { $("#f_notes").value = "Barcode: " + prod; found.push("Barcode"); }
+    status(found.length ? "Mila → " + found.join(", ") + ". Kripya sab check kar lo." : (ocrFailed ? "OCR load nahi hua (internet check karo)." : "Kuch pakka nahi mila. Photo saaf aur seedhi lo, ya haath se bharo."));
+  } catch (e) { status("Scan error: " + e.message); }
 }
 
 async function saveEditor() {
@@ -311,228 +504,373 @@ async function saveEditor() {
   if (!model) { toast("Brand / Model likho"); return; }
   const h = g("f_health");
   if (h && (isNaN(h) || +h < 0 || +h > 100)) { toast("Health 0 se 100 ke beech hona chahiye"); return; }
+  if (editPhotos.reduce((a, p) => a + p.length, 0) > 800000) { toast("Photos bahut bhari hain, kuch hata do"); return; }
   const serial = g("f_serial");
   const base = editing ? { ...editing } : blankItem();
   if (serial && items.some(x => x.id !== base.id && x.serial.toLowerCase() === serial.toLowerCase()) &&
       !confirm("Is serial ka drive pehle se maujood hai. Phir bhi save karein?")) return;
   Object.assign(base, { kind: g("f_kind"), brandModel: model, capacity: g("f_capacity"), serial, health: h, hours: g("f_hours"),
-    condition: g("f_cond"), warranty: g("f_warranty"), buyPrice: g("f_buy"), sellPrice: g("f_sell"), buyer: g("f_buyer"), notes: g("f_notes"), photo: editPhoto });
-  closeModal();
-  putItem(base); toast("Drive save ho gaya");
+    condition: g("f_cond"), warranty: g("f_warranty"), buyPrice: g("f_buy"), sellPrice: g("f_sell"), notes: g("f_notes"), photos: [...editPhotos] });
+  closeModal(); putItem(base); toast("Drive save ho gaya");
 }
 
-// ---------- sale ----------
+// ---------- bill ----------
 async function nextInvoiceNo() {
   const ref = doc(db, "settings", "shop");
   const r = await runTransaction(db, async tx => {
-    const s = await tx.get(ref); const d = s.exists() ? s.data() : {};
-    const cur = parseInt(d.nextNo) || 1;
+    const s = await tx.get(ref), d = s.exists() ? s.data() : {}, cur = parseInt(d.nextNo) || 1;
     tx.set(ref, { nextNo: cur + 1 }, { merge: true });
     return { n: cur, prefix: d.prefix || "INV-" };
   });
   return r.prefix + String(r.n).padStart(4, "0");
 }
-
-function openSell(id) {
-  const it = items.find(x => x.id === id); if (!it) return;
-  editing = it;
-  openModal(`<h3>Sale record karo</h3>
-    <label>Buyer / customer</label><input id="s_buyer" value="${esc(it.buyer)}">
-    <label>Phone (optional)</label><input id="s_phone" type="tel" value="${esc(it.buyerPhone)}">
-    <label>Selling price ₹</label><input id="s_price" inputmode="decimal" value="${esc(it.sellPrice)}">
-    <label>Payment mode</label><select id="s_pay">${opts(PAYMENTS, it.payment)}</select>
+function specText(it) {
+  return [it.health && `Health ${it.health}%`, it.hours && `Power-on ${it.hours} hrs`, it.condition && `Condition: ${it.condition}`, it.warranty && `Warranty: ${it.warranty}`].filter(Boolean).join(" | ");
+}
+const driveLine = it => ({ t: "drive", driveId: it.id, catId: "", desc: `${it.kind} ${it.brandModel} ${it.capacity}`.trim(), spec: specText(it), serial: it.serial, unit: "pc", qty: 1, rate: num(it.sellPrice) });
+function ewLine() {
+  const c = ewaste[0]; if (!c) return null;
+  return { t: "ewaste", driveId: "", catId: c.id, desc: c.name, spec: "", serial: "", unit: c.unit, qty: 1, rate: c.rate };
+}
+function openBill(o = {}) {
+  const b = o.billId ? bills.find(x => x.id === o.billId) : null;
+  draft = b ? { id: b.id, buyer: b.buyer, buyerPhone: b.buyerPhone, payment: b.payment, notes: b.notes, showPhotos: b.showPhotos, lines: b.lines.map(l => ({ ...l })) }
+            : { id: null, buyer: "", buyerPhone: "", payment: "Cash", notes: "", showPhotos: true, lines: [] };
+  if (o.driveId) { const it = items.find(x => x.id === o.driveId); if (it) { draft.lines.push(driveLine(it)); draft.buyer = it.buyer; draft.buyerPhone = it.buyerPhone; } }
+  if (o.ewaste) { const l = ewLine(); if (l) draft.lines.push(l); else toast("Pehle e-waste category banao"); }
+  openModal(`<h3>${b ? "Bill edit: " + esc(b.invoiceNo) : "Naya bill"}</h3>
+    <label>Customer / buyer</label><input id="b_buyer" value="${esc(draft.buyer)}">
+    <label>Phone (optional)</label><input id="b_phone" type="tel" value="${esc(draft.buyerPhone)}">
+    <label>Payment mode</label><select id="b_pay">${opts(PAYMENTS, draft.payment)}</select>
+    <label>Items</label><div id="b_lines"></div>
+    <div class="row">
+      <button class="btn sm grow" data-act="addDrive">+ Drive (stock se)</button>
+      <button class="btn sm grow" data-act="scanadd">📷 Scan se drive</button>
+      <button class="btn sm grow" data-act="addEw">+ E-waste</button>
+      <button class="btn sm grow" data-act="addCustom">+ Custom</button>
+    </div>
+    <div class="total">Total: <span id="b_total"></span></div>
+    <label>Notes (optional)</label><input id="b_notes" value="${esc(draft.notes)}">
+    <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="b_photos" style="width:20px;height:20px" ${draft.showPhotos ? "checked" : ""}> Invoice mein drive ki photos lagao</label>
     <div class="row" style="margin-top:12px">
       <button class="btn grow" data-act="closeModal">Cancel</button>
-      <button class="btn primary grow" data-act="confirmSell">Sold</button>
+      <button class="btn grow" data-act="saveBill">Save</button>
+      <button class="btn primary grow" data-act="saveBillPdf">Save + Invoice</button>
     </div>`);
+  renderLines();
 }
-async function confirmSell() {
-  const it = { ...editing };
-  const p = parseFloat($("#s_price").value);
-  if (!p || p <= 0) { toast("Selling price likho"); return; }
-  Object.assign(it, { buyer: $("#s_buyer").value.trim(), buyerPhone: $("#s_phone").value.trim(), sellPrice: String(p), payment: $("#s_pay").value, status: "Sold", soldDate: today() });
+function renderLines() {
+  const el = $("#b_lines"); if (!el || !draft) return;
+  el.innerHTML = draft.lines.length ? draft.lines.map((l, i) => {
+    let head;
+    if (l.t === "drive") head = `<b>${esc(l.desc)}</b>${l.serial ? `<div class="sub" style="margin:0">S/N: ${esc(l.serial)}</div>` : ""}`;
+    else if (l.t === "ewaste") head = `<select data-li="${i}" data-f="cat">${ewaste.map(c => `<option value="${c.id}"${c.id === l.catId ? " selected" : ""}>${esc(c.name)}</option>`).join("")}${ewaste.some(c => c.id === l.catId) ? "" : `<option selected value="">${esc(l.desc)}</option>`}</select>`;
+    else head = `<input data-li="${i}" data-f="desc" placeholder="Item ka naam" value="${esc(l.desc)}">`;
+    return `<div class="line"><div class="ld">${head}</div>
+      <button class="btn sm danger rm" data-act="rmline" data-i="${i}">✕</button>
+      <div class="lq"><input data-li="${i}" data-f="qty" inputmode="decimal" value="${l.qty}" ${l.t === "drive" ? "disabled" : ""}><span>${esc(l.unit)}</span> × ₹<input data-li="${i}" data-f="rate" inputmode="decimal" value="${l.rate}"> = <b id="amt_${i}">₹${m0(l.qty * l.rate)}</b></div></div>`;
+  }).join("") : `<div class="sub">Abhi koi item nahi. Neeche se jodo.</div>`;
+  updTotal();
+}
+function updTotal() { const t = $("#b_total"); if (t && draft) t.textContent = "₹" + m0(billTotal(draft.lines)); }
+document.addEventListener("input", e => {
+  const el = e.target; if (!draft || el.dataset.li === undefined || el.dataset.f === "cat") return;
+  const i = +el.dataset.li, f = el.dataset.f, l = draft.lines[i]; if (!l) return;
+  l[f] = f === "desc" ? el.value : (parseFloat(el.value) || 0);
+  const a = $("#amt_" + i); if (a) a.textContent = "₹" + m0(l.qty * l.rate);
+  updTotal();
+});
+document.addEventListener("change", e => {
+  const el = e.target; if (!draft || el.dataset.f !== "cat") return;
+  const l = draft.lines[+el.dataset.li], c = ewaste.find(x => x.id === el.value);
+  if (l && c) { Object.assign(l, { catId: c.id, desc: c.name, unit: c.unit, rate: c.rate }); renderLines(); }
+});
+function openPicker() {
+  const used = new Set(draft.lines.filter(l => l.t === "drive").map(l => l.driveId));
+  const avail = items.filter(i => i.status === "In Stock" && !used.has(i.id)).sort((a, b) => b.createdAt - a.createdAt);
+  openSub(`<h3>Stock se drives chuno</h3><input id="pk_q" placeholder="Search..." style="margin-bottom:6px">
+    <div id="pk_list">${avail.length ? avail.map(i => `<label class="pick" data-s="${esc((i.serial + " " + i.brandModel + " " + i.capacity + " " + i.kind).toLowerCase())}">
+      <input type="checkbox" value="${i.id}"><div><b>${esc(i.kind)} ${esc(i.brandModel)} ${esc(i.capacity)}</b><div class="sub" style="margin:0">S/N: ${esc(i.serial || "-")} • ₹${esc(i.sellPrice || "0")}</div></div></label>`).join("") : `<div class="empty">Stock mein koi drive nahi.</div>`}</div>
+    <div class="row" style="margin-top:10px"><button class="btn grow" data-act="closeSub">Cancel</button><button class="btn primary grow" data-act="pickDone">Add</button></div>`);
+  $("#pk_q").addEventListener("input", e => { const q = e.target.value.toLowerCase(); document.querySelectorAll("#pk_list .pick").forEach(p => p.classList.toggle("hidden", !p.dataset.s.includes(q))); });
+}
+function pickDone() {
+  document.querySelectorAll("#pk_list input:checked").forEach(c => { const it = items.find(x => x.id === c.value); if (it) draft.lines.push(driveLine(it)); });
+  closeSub(); renderLines();
+}
+async function scanAdd() {
+  const code = await scanBarcode(); if (!code) return;
+  const it = items.find(i => i.status === "In Stock" && i.serial && i.serial.toLowerCase() === code.toLowerCase());
+  if (!it) { toast("Stock mein ye serial nahi mila: " + code); return; }
+  if (draft.lines.some(l => l.driveId === it.id)) { toast("Ye drive pehle se bill mein hai"); return; }
+  draft.lines.push(driveLine(it)); renderLines(); toast("Jud gaya: " + it.brandModel);
+}
+async function saveBill(andPdf) {
+  if (!draft) return;
+  const buyer = $("#b_buyer").value.trim();
+  const lines = draft.lines.map(l => ({ ...l, qty: +l.qty || 0, rate: +l.rate || 0 }));
+  if (!lines.length) { toast("Kam se kam ek item jodo"); return; }
+  if (lines.some(l => l.qty <= 0)) { toast("Quantity 0 se zyada honi chahiye"); return; }
+  if (lines.some(l => l.t === "custom" && !l.desc.trim())) { toast("Custom item ka naam likho"); return; }
+  const total = billTotal(lines);
+  if (total <= 0) { toast("Rate daalo, total 0 hai"); return; }
+  const existing = draft.id ? bills.find(b => b.id === draft.id) : null;
+  const bill = existing ? { ...existing } : { id: newId(), createdAt: Date.now(), invoiceNo: "", date: today() };
+  Object.assign(bill, { buyer, buyerPhone: $("#b_phone").value.trim(), payment: $("#b_pay").value, notes: $("#b_notes").value.trim(), showPhotos: $("#b_photos").checked, lines, total, updatedAt: Date.now(), updatedBy: user.email });
   closeModal();
-  if (!it.invoiceNo) { try { it.invoiceNo = await withTimeout(nextInvoiceNo(), 8000); } catch { toast("Invoice number ke liye internet chahiye. Sale save ho gayi, invoice baad mein banao."); } }
-  putItem(it);
-  if (it.invoiceNo && confirm("Sale ho gayi. Invoice " + it.invoiceNo + " abhi share karein?")) makeInvoice(it);
+  if (!bill.invoiceNo) { try { bill.invoiceNo = await withTimeout(nextInvoiceNo(), 8000); } catch { toast("Invoice number ke liye internet chahiye. Bill save hua, number baad mein lagega."); } }
+  const batch = writeBatch(db), now = Date.now(), ids = new Set();
+  batch.set(doc(db, "bills", bill.id), bill);
+  for (const l of lines) if (l.t === "drive") {
+    ids.add(l.driveId); const it = items.find(x => x.id === l.driveId);
+    if (it) batch.set(doc(db, "drives", it.id), { ...it, status: "Sold", soldDate: bill.date, buyer, buyerPhone: bill.buyerPhone, payment: bill.payment, sellPrice: String(l.rate), invoiceNo: bill.invoiceNo, updatedAt: now, updatedBy: user.email });
+  }
+  if (existing) for (const l of existing.lines) if (l.t === "drive" && !ids.has(l.driveId)) {
+    const it = items.find(x => x.id === l.driveId);
+    if (it) batch.set(doc(db, "drives", it.id), { ...it, status: "In Stock", soldDate: "", invoiceNo: "", updatedAt: now, updatedBy: user.email });
+  }
+  batch.commit().catch(e => toast("Save error: " + (e.code || e.message)));
+  toast("Bill save ho gaya");
+  if (andPdf && bill.invoiceNo) makePdf(bill);
+}
+function deleteBill(id) {
+  const b = bills.find(x => x.id === id); if (!b) return;
+  if (!confirm("Bill " + (b.invoiceNo || "") + " delete karein? Is bill ke drives wapas stock mein aa jayenge.")) return;
+  const batch = writeBatch(db), now = Date.now();
+  for (const l of b.lines) if (l.t === "drive") { const it = items.find(x => x.id === l.driveId); if (it) batch.set(doc(db, "drives", it.id), { ...it, status: "In Stock", soldDate: "", invoiceNo: "", updatedAt: now, updatedBy: user.email }); }
+  batch.delete(doc(db, "bills", id));
+  batch.commit().catch(e => toast("Delete error: " + (e.code || e.message)));
+}
+function revertDrive(id) {
+  const it = items.find(x => x.id === id); if (!it) return;
+  const b = billOfDrive(id);
+  if (!confirm(b ? "Ye drive bill " + b.invoiceNo + " se hat kar stock mein wapas aayega. Theek hai?" : "Stock mein wapas karein?")) return;
+  const batch = writeBatch(db), now = Date.now();
+  batch.set(doc(db, "drives", id), { ...it, status: "In Stock", soldDate: "", invoiceNo: "", updatedAt: now, updatedBy: user.email });
+  if (b) {
+    const lines = b.lines.filter(l => l.driveId !== id);
+    if (!lines.length) batch.delete(doc(db, "bills", b.id)); else batch.set(doc(db, "bills", b.id), { ...b, lines, total: billTotal(lines), updatedAt: now });
+  }
+  batch.commit().catch(e => toast("Error: " + (e.code || e.message)));
 }
 
-// ---------- shop settings ----------
+// ---------- e-waste ----------
+function openCat(id) {
+  const c = id ? ewaste.find(x => x.id === id) : null;
+  editing = c;
+  openModal(`<h3>${c ? "Category edit" : "Nayi category"}</h3>
+    <label>Naam</label><input id="c_name" value="${esc(c ? c.name : "")}" placeholder="RAM, Processor, TV kit ...">
+    <label>Rate kis hisaab se</label><select id="c_unit"><option value="pc"${c && c.unit === "pc" ? " selected" : ""}>Per piece</option><option value="kg"${c && c.unit === "kg" ? " selected" : ""}>Per kg</option></select>
+    <label>Rate ₹</label><input id="c_rate" inputmode="decimal" value="${c ? esc(fq(c.rate)) : ""}">
+    <div class="row" style="margin-top:12px"><button class="btn grow" data-act="closeModal">Cancel</button>
+    ${c ? `<button class="btn danger grow" data-act="catdel" data-id="${c.id}">Delete</button>` : ""}
+    <button class="btn primary grow" data-act="catsave">Save</button></div>`);
+}
+function saveCat() {
+  const name = $("#c_name").value.trim(); if (!name) { toast("Naam likho"); return; }
+  const c = editing ? { ...editing } : { id: newId() };
+  Object.assign(c, { name, unit: $("#c_unit").value, rate: parseFloat($("#c_rate").value) || 0, updatedAt: Date.now(), updatedBy: user.email });
+  closeModal(); setDoc(doc(db, "ewaste", c.id), c).catch(e => toast("Save error: " + (e.code || e.message)));
+}
+function seedCats() {
+  const have = new Set(ewaste.map(c => c.name.toLowerCase())), batch = writeBatch(db);
+  let n = 0;
+  for (const name of COMMON_CATS) if (!have.has(name.toLowerCase())) { const id = newId() + n; n++; batch.set(doc(db, "ewaste", id), { id, name, unit: /kg|scrap|wire|battery/i.test(name) ? "kg" : "pc", rate: 0, updatedAt: Date.now(), updatedBy: user.email }); }
+  if (!n) { toast("Saari common categories pehle se hain"); return; }
+  batch.commit().then(() => toast(n + " categories judi. Ab rate daalo.")).catch(e => toast("Error: " + (e.code || e.message)));
+}
+
+// ---------- shop ----------
 function openShop() {
   const f = (id, label, val, extra = "") => `<label>${label}</label><input id="${id}" value="${esc(val)}" ${extra}>`;
   openModal(`<h3>Shop & invoice settings</h3>
     ${f("sh_name", "Shop name", shop.name)}${f("sh_addr", "Address", shop.address)}${f("sh_phone", "Phone", shop.phone, 'type="tel"')}
     ${f("sh_gstin", "GSTIN (optional)", shop.gstin)}
-    ${f("sh_gst", "GST % (selling price GST-inclusive maana jayega, 0 = no GST)", shop.gstPercent, 'inputmode="decimal"')}
+    ${f("sh_gst", "GST % (price GST-inclusive maana jayega, 0 = no GST)", shop.gstPercent, 'inputmode="decimal"')}
     ${f("sh_prefix", "Invoice prefix", shop.prefix)}${f("sh_next", "Next invoice number", shop.nextNo, 'inputmode="numeric"')}
-    <div class="row" style="margin-top:12px">
-      <button class="btn grow" data-act="closeModal">Cancel</button>
-      <button class="btn primary grow" data-act="saveShop">Save</button>
-    </div>`);
+    <div class="row" style="margin-top:12px"><button class="btn grow" data-act="closeModal">Cancel</button><button class="btn primary grow" data-act="saveShop">Save</button></div>`);
 }
 function saveShop() {
   const g = id => $("#" + id).value.trim();
-  const s = { name: g("sh_name"), address: g("sh_addr"), phone: g("sh_phone"), gstin: g("sh_gstin").toUpperCase(), gstPercent: g("sh_gst"),
-    prefix: g("sh_prefix") || "INV-", nextNo: Math.max(1, parseInt(g("sh_next")) || 1) };
+  const s = { name: g("sh_name"), address: g("sh_addr"), phone: g("sh_phone"), gstin: g("sh_gstin").toUpperCase(), gstPercent: g("sh_gst"), prefix: g("sh_prefix") || "INV-", nextNo: Math.max(1, parseInt(g("sh_next")) || 1) };
   shop = { ...shop, ...s };
   setDoc(doc(db, "settings", "shop"), s, { merge: true }).catch(e => toast("Save error: " + (e.code || e.message)));
   closeModal(); toast("Settings save ho gayi");
 }
 
-// ---------- invoice ----------
+// ---------- PDF ----------
 const imgSize = src => new Promise(res => { const i = new Image(); i.onload = () => res({ w: i.naturalWidth, h: i.naturalHeight }); i.onerror = () => res(null); i.src = src; });
-
 async function shareOrDownload(blob, name, title) {
   const file = new File([blob], name, { type: blob.type });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try { await navigator.share({ files: [file], title }); return; } catch (e) { if (e.name === "AbortError") return; }
-  }
+  if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title }); return; } catch (e) { if (e.name === "AbortError") return; } }
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 20000);
 }
-
-async function makeInvoice(item) {
-  if (!window.jspdf) { toast("PDF library load nahi hui. Pehli baar internet on karke page reload karo."); return; }
-  item = { ...item };
-  if (!item.invoiceNo) {
-    try { item.invoiceNo = await withTimeout(nextInvoiceNo(), 8000); putItem(item); }
+function billFromDrive(it) {
+  const l = driveLine(it);
+  return { id: "legacy-" + it.id, invoiceNo: it.invoiceNo, date: it.soldDate || today(), buyer: it.buyer, buyerPhone: it.buyerPhone, payment: it.payment, notes: it.notes, showPhotos: true, lines: [l], total: l.rate };
+}
+async function persistNo(bill) {
+  const batch = writeBatch(db), now = Date.now();
+  if (bills.some(b => b.id === bill.id)) batch.set(doc(db, "bills", bill.id), { ...bill, updatedAt: now });
+  for (const l of bill.lines) if (l.t === "drive") { const it = items.find(x => x.id === l.driveId); if (it) batch.set(doc(db, "drives", it.id), { ...it, invoiceNo: bill.invoiceNo, updatedAt: now }); }
+  await batch.commit();
+}
+async function makePdf(bill) {
+  if (!window.jspdf) { toast("PDF library load nahi hui. Internet on karke page reload karo."); return; }
+  bill = { ...bill };
+  if (!bill.invoiceNo) {
+    try { bill.invoiceNo = await withTimeout(nextInvoiceNo(), 8000); persistNo(bill).catch(() => {}); }
     catch { toast("Invoice number ke liye internet chahiye."); return; }
   }
   try {
     const pdf = new window.jspdf.jsPDF({ unit: "pt", format: "a4" });
-    const W = 595, M = 40, R = W - M;
+    const W = 595, M = 40, R = W - M, BOTTOM = 770;
     pdf.setTextColor(23, 43, 77);
-    const text = (s, x, y, size = 12, bold = false, right = false) => { pdf.setFont("helvetica", bold ? "bold" : "normal"); pdf.setFontSize(size); pdf.text(String(s), x, y, right ? { align: "right" } : undefined); };
-    const wrap = (s, x, y, width, size = 12, bold = false) => {
-      pdf.setFont("helvetica", bold ? "bold" : "normal"); pdf.setFontSize(size);
-      const lines = pdf.splitTextToSize(String(s), width);
-      pdf.text(lines, x, y + size);
-      return y + lines.length * size * 1.25;
-    };
-    text(shop.name || "HDD / SSD Shop", M, 55, 20, true);
-    text("INVOICE", R, 55, 20, true, true);
+    const font = (size, bold) => { pdf.setFont("helvetica", bold ? "bold" : "normal"); pdf.setFontSize(size); };
+    const text = (s, x, y, size = 12, bold = false, align) => { font(size, bold); pdf.text(String(s), x, y, align ? { align } : undefined); };
+    const split = (s, w, size, bold) => { font(size, bold); return pdf.splitTextToSize(String(s), w); };
+    const wrap = (s, x, y, w, size = 12, bold = false) => { const ls = split(s, w, size, bold); pdf.text(ls, x, y + size); return y + ls.length * size * 1.25; };
     let y = 62;
+    text(shop.name || "HDD / SSD Shop", M, 55, 20, true); text("INVOICE", R, 55, 20, true, "right");
     if (shop.address) y = wrap(shop.address, M, y, 300, 11);
     if (shop.phone) y = wrap("Phone: " + shop.phone, M, y, 300, 11);
     if (shop.gstin) y = wrap("GSTIN: " + shop.gstin, M, y, 300, 11);
-    text("Invoice No: " + item.invoiceNo, R, 80, 12, false, true);
-    text("Date: " + (item.soldDate || today()), R, 98, 12, false, true);
-    if (item.status === "Sold") text("Payment: " + item.payment, R, 116, 12, false, true);
-    y = Math.max(y, 128) + 8;
-    pdf.setDrawColor(176, 190, 197); pdf.line(M, y, R, y); y += 18;
+    text("Invoice No: " + bill.invoiceNo, R, 80, 12, false, "right"); text("Date: " + bill.date, R, 98, 12, false, "right"); text("Payment: " + bill.payment, R, 116, 12, false, "right");
+    y = Math.max(y, 128) + 8; pdf.setDrawColor(176, 190, 197); pdf.line(M, y, R, y); y += 18;
     text("BILL TO", M, y, 10, true); y += 4;
-    y = wrap(item.buyer || "Walk-in customer", M, y, 300, 13, true);
-    if (item.buyerPhone) y = wrap("Phone: " + item.buyerPhone, M, y, 300, 11);
-    y += 16;
-    pdf.setFillColor(227, 236, 247); pdf.rect(M, y, R - M, 24, "F");
-    text("Description", M + 6, y + 16, 11, true); text("Serial No.", 300, y + 16, 11, true);
-    text("Qty", 440, y + 16, 11, true); text("Amount (Rs.)", R - 6, y + 16, 11, true, true);
-    y += 32;
-    const total = num(item.sellPrice);
-    let desc = `${item.kind} ${item.brandModel} ${item.capacity}`.trim();
-    const spec = [item.health && `Health ${item.health}%`, item.hours && `Power-on ${item.hours} hrs`, item.condition && `Condition: ${item.condition}`].filter(Boolean);
-    if (spec.length) desc += "\n" + spec.join(" | ");
-    if (item.warranty) desc += "\nWarranty: " + item.warranty;
-    const d1 = wrap(desc, M + 6, y, 240, 11);
-    const d2 = wrap(item.serial || "-", 300, y, 130, 11);
-    text("1", 440, y + 11, 11); text(m2(total), R - 6, y + 11, 11, false, true);
-    y = Math.max(d1, d2) + 10; pdf.line(M, y, R, y); y += 20;
-    const gst = num(shop.gstPercent);
+    y = wrap(bill.buyer || "Walk-in customer", M, y, 300, 13, true);
+    if (bill.buyerPhone) y = wrap("Phone: " + bill.buyerPhone, M, y, 300, 11);
+    y += 14;
+    const tableHeader = () => {
+      pdf.setFillColor(227, 236, 247); pdf.rect(M, y, R - M, 24, "F");
+      text("#", M + 6, y + 16, 10, true); text("Description", M + 24, y + 16, 10, true); text("Serial / Unit", 282, y + 16, 10, true);
+      text("Qty", 438, y + 16, 10, true, "right"); text("Rate", 492, y + 16, 10, true, "right"); text("Amount (Rs.)", R - 6, y + 16, 10, true, "right"); y += 30;
+    };
+    tableHeader();
+    bill.lines.forEach((l, i) => {
+      const dl = split(l.desc + (l.spec ? "\n" + l.spec : ""), 212, 10, false);
+      const sl = split(l.t === "drive" ? (l.serial || "-") : "per " + l.unit, 92, 10, false);
+      const h = Math.max(dl.length, sl.length, 1) * 12.5 + 8;
+      if (y + h > BOTTOM) { pdf.addPage(); y = 50; tableHeader(); }
+      font(10, false);
+      pdf.text(String(i + 1), M + 6, y + 10); pdf.text(dl, M + 24, y + 10); pdf.text(sl, 282, y + 10);
+      pdf.text(fq(l.qty) + " " + l.unit, 438, y + 10, { align: "right" }); pdf.text(m2(l.rate), 492, y + 10, { align: "right" }); pdf.text(m2(l.qty * l.rate), R - 6, y + 10, { align: "right" });
+      y += h; pdf.setDrawColor(223, 229, 236); pdf.line(M, y - 3, R, y - 3);
+    });
+    if (y + 110 > BOTTOM) { pdf.addPage(); y = 50; }
+    y += 14;
+    const total = bill.lines.reduce((a, l) => a + l.qty * l.rate, 0), gst = num(shop.gstPercent);
     if (gst > 0) {
       const taxable = total / (1 + gst / 100), tax = total - taxable;
-      text("Taxable value", 400, y, 11); text(m2(taxable), R - 6, y, 11, false, true); y += 16;
-      text(`CGST ${gst / 2}%`, 400, y, 11); text(m2(tax / 2), R - 6, y, 11, false, true); y += 16;
-      text(`SGST ${gst / 2}%`, 400, y, 11); text(m2(tax / 2), R - 6, y, 11, false, true); y += 16;
+      text("Taxable value", 400, y, 11); text(m2(taxable), R - 6, y, 11, false, "right"); y += 16;
+      text(`CGST ${gst / 2}%`, 400, y, 11); text(m2(tax / 2), R - 6, y, 11, false, "right"); y += 16;
+      text(`SGST ${gst / 2}%`, 400, y, 11); text(m2(tax / 2), R - 6, y, 11, false, "right"); y += 16;
     }
-    text("TOTAL", 400, y + 4, 14, true); text("Rs. " + m2(total), R - 6, y + 4, 14, true, true); y += 36;
-    if (item.photo && item.photo.startsWith("data:image/jpeg")) {
-      const dim = await imgSize(item.photo);
-      if (dim) {
-        const sc = Math.min(220 / dim.w, 160 / dim.h), w = dim.w * sc, h = dim.h * sc;
-        text("Drive photo", M, y, 10, true);
-        pdf.addImage(item.photo, "JPEG", M, y + 6, w, h); y += h + 24;
+    text("TOTAL", 400, y + 4, 14, true); text("Rs. " + m2(total), R - 6, y + 4, 14, true, "right"); y += 34;
+    if (bill.notes) { if (y + 40 > BOTTOM) { pdf.addPage(); y = 50; } y = wrap("Notes: " + bill.notes, M, y, R - M, 11) + 8; }
+    if (bill.showPhotos) {
+      const ents = bill.lines.filter(l => l.t === "drive").map(l => ({ l, it: items.find(x => x.id === l.driveId) })).filter(e => e.it && e.it.photos.length);
+      if (ents.length) {
+        if (y + 40 > BOTTOM) { pdf.addPage(); y = 50; }
+        text("Drive photos", M, y, 11, true); y += 8;
+        for (const e of ents) {
+          if (y + 130 > BOTTOM) { pdf.addPage(); y = 50; }
+          y = wrap(e.l.desc + (e.l.serial ? "  •  S/N " + e.l.serial : ""), M, y, R - M, 9, true);
+          let col = 0, rowY = y + 2;
+          for (const ph of e.it.photos) {
+            if (col === 4) { col = 0; rowY += 98; if (rowY + 92 > BOTTOM) { pdf.addPage(); rowY = 50; } }
+            if (ph.startsWith("data:image/jpeg")) { const d = await imgSize(ph); if (d) { const sc = Math.min(120 / d.w, 90 / d.h); pdf.addImage(ph, "JPEG", M + col * 128, rowY, d.w * sc, d.h * sc); } }
+            col++;
+          }
+          y = rowY + 98;
+        }
       }
     }
-    if (item.notes) y = wrap("Notes: " + item.notes, M, y, R - M, 11) + 10;
-    text("Thank you for your purchase.", M, 780, 13, true);
-    text("Warranty, if any, is as stated above.", M, 798, 10);
-    text("Generated by HDD Bill Manager", R, 798, 10, false, true);
-    await shareOrDownload(pdf.output("blob"), "Invoice_" + item.invoiceNo.replace(/[^A-Za-z0-9_-]/g, "_") + ".pdf", "Invoice " + item.invoiceNo);
+    if (y + 40 > BOTTOM) { pdf.addPage(); y = 50; }
+    text("Thank you for your purchase.", M, y + 8, 12, true);
+    text("Warranty, if any, is as stated above.", M, y + 24, 9);
+    const n = pdf.getNumberOfPages();
+    for (let p = 1; p <= n; p++) { pdf.setPage(p); text("Powered by Silicon Traders", W / 2, 820, 10, true, "center"); text(`Page ${p} of ${n}`, R, 820, 9, false, "right"); }
+    await shareOrDownload(pdf.output("blob"), "Invoice_" + bill.invoiceNo.replace(/[^A-Za-z0-9_-]/g, "_") + ".pdf", "Invoice " + bill.invoiceNo);
   } catch (e) { toast("Invoice error: " + e.message); }
 }
 
 // ---------- backup / restore ----------
 async function doBackup() {
-  const data = { app: "hdd-bill-manager", version: 4, exportedAt: new Date().toISOString(), shop, items };
-  const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+  const data = { app: "hdd-bill-manager", version: 5, exportedAt: new Date().toISOString(), shop, items, bills, ewaste };
   const d = new Date(), stamp = d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0") + "_" + String(d.getHours()).padStart(2, "0") + String(d.getMinutes()).padStart(2, "0");
-  await shareOrDownload(blob, `HDD_Bill_Manager_Backup_${stamp}.json`, "HDD Bill Manager backup");
+  await shareOrDownload(new Blob([JSON.stringify(data)], { type: "application/json" }), `HDD_Bill_Manager_Backup_${stamp}.json`, "HDD Bill Manager backup");
 }
-
-let restoreData = [];
 async function onRestoreFile(e) {
   const file = e.target.files[0]; e.target.value = ""; if (!file) return;
   try {
     const j = JSON.parse(await file.text());
     const arr = Array.isArray(j) ? j : j.items;
     if (!Array.isArray(arr)) throw new Error("Items nahi mile");
-    restoreData = arr.map(normalize);
-    openModal(`<h3>${restoreData.length} drives mile</h3>
-      <p class="sub">Merge: sirf naye drives jodta hai. Replace: abhi ka poora data hata kar backup wala laga deta hai (dono bhai ke phone par).</p>
-      <div class="row"><button class="btn grow" data-act="closeModal">Cancel</button>
-      <button class="btn grow" data-act="doMerge">Merge</button>
-      <button class="btn danger grow" data-act="doReplace">Replace</button></div>`);
-    restoreData.shopJson = Array.isArray(j) ? null : j.shop || null;
+    restoreData = { items: arr.map(normalize), bills: Array.isArray(j.bills) ? j.bills.map(normBill) : [], ewaste: Array.isArray(j.ewaste) ? j.ewaste.map(normEw) : [], shop: Array.isArray(j) ? null : j.shop || null };
+    openModal(`<h3>${restoreData.items.length} drives, ${restoreData.bills.length} bills, ${restoreData.ewaste.length} categories</h3>
+      <p class="sub">Merge: sirf naya data jodta hai. Replace: abhi ka poora data hata kar backup wala laga deta hai (dono bhai ke phone par).</p>
+      <div class="row"><button class="btn grow" data-act="closeModal">Cancel</button><button class="btn grow" data-act="doMerge">Merge</button><button class="btn danger grow" data-act="doReplace">Replace</button></div>`);
   } catch (err) { toast("Restore file sahi nahi hai: " + err.message); }
 }
 async function writeMany(ops) {
-  for (let i = 0; i < ops.length; i += 20) {
-    const b = writeBatch(db);
-    ops.slice(i, i + 20).forEach(f => f(b));
-    await b.commit();
-  }
+  for (let i = 0; i < ops.length; i += 8) { const b = writeBatch(db); ops.slice(i, i + 8).forEach(f => f(b)); await b.commit(); }
 }
+const stamp = { updatedAt: 0, updatedBy: "" };
 async function doMerge() {
-  const have = new Set(items.map(i => i.id));
-  const add = restoreData.filter(r => !have.has(r.id));
-  closeModal();
-  try { await writeMany(add.map(r => b => b.set(doc(db, "drives", r.id), { ...r, updatedAt: Date.now(), updatedBy: user.email }))); toast(add.length + " drives add hue"); }
-  catch (e) { toast("Restore error: " + (e.code || e.message)); }
+  const r = restoreData, ops = []; closeModal();
+  const add = (col, arr, have) => arr.filter(x => !have.some(h => h.id === x.id)).forEach(x => ops.push(b => b.set(doc(db, col, x.id), { ...x, updatedAt: Date.now(), updatedBy: user.email })));
+  add("drives", r.items, items); add("bills", r.bills, bills); add("ewaste", r.ewaste, ewaste);
+  try { await writeMany(ops); toast(ops.length + " records add hue"); } catch (e) { toast("Restore error: " + (e.code || e.message)); }
 }
 async function doReplace() {
   if (!confirm("Pakka? Abhi ka saara data dono phone se hat jayega aur backup wala aayega.")) return;
-  const keep = new Set(restoreData.map(r => r.id));
-  const ops = items.filter(i => !keep.has(i.id)).map(i => b => b.delete(doc(db, "drives", i.id)));
-  restoreData.forEach(r => ops.push(b => b.set(doc(db, "drives", r.id), { ...r, updatedAt: Date.now(), updatedBy: user.email })));
-  const sj = restoreData.shopJson; closeModal();
-  try {
-    await writeMany(ops);
-    if (sj) await setDoc(doc(db, "settings", "shop"), sj, { merge: true });
-    toast("Backup restore ho gaya");
-  } catch (e) { toast("Restore error: " + (e.code || e.message)); }
+  const r = restoreData, ops = []; closeModal();
+  const rep = (col, arr, have) => {
+    const keep = new Set(arr.map(x => x.id));
+    have.filter(h => !keep.has(h.id)).forEach(h => ops.push(b => b.delete(doc(db, col, h.id))));
+    arr.forEach(x => ops.push(b => b.set(doc(db, col, x.id), { ...x, updatedAt: Date.now(), updatedBy: user.email })));
+  };
+  rep("drives", r.items, items); rep("bills", r.bills, bills); rep("ewaste", r.ewaste, ewaste);
+  try { await writeMany(ops); if (r.shop) await setDoc(doc(db, "settings", "shop"), r.shop, { merge: true }); toast("Backup restore ho gaya"); }
+  catch (e) { toast("Restore error: " + (e.code || e.message)); }
 }
 
 // ---------- actions ----------
+const byId = id => items.find(x => x.id === id);
 const actions = {
-  add: () => openEditor(null),
-  edit: d => openEditor(d.id),
-  sell: d => openSell(d.id),
-  stock: d => { const it = items.find(x => x.id === d.id); if (it) putItem({ ...it, status: "In Stock", soldDate: "" }); },
-  del: d => { const it = items.find(x => x.id === d.id); if (it && confirm("Delete karein?\n" + it.brandModel + " • " + it.serial)) deleteDoc(doc(db, "drives", d.id)).catch(e => toast("Delete error: " + (e.code || e.message))); },
-  invoice: d => { const it = items.find(x => x.id === d.id); if (it) makeInvoice(it); },
+  tab: d => { tab = d.v; render(); },
+  fab: () => tab === "stock" ? openEditor(null) : tab === "bills" ? openBill() : openCat(null),
+  add: () => openEditor(null), edit: d => openEditor(d.id),
+  sell: d => openBill({ driveId: d.id }),
+  stock: d => revertDrive(d.id),
+  del: d => { const it = byId(d.id); if (it && confirm("Delete karein?\n" + it.brandModel + " • " + it.serial)) deleteDoc(doc(db, "drives", d.id)).catch(e => toast("Delete error: " + (e.code || e.message))); },
+  invoice: d => { const it = byId(d.id); if (!it) return; const b = billOfDrive(it.id); makePdf(b || billFromDrive(it)); },
   filter: d => { filter = d.v; render(); },
-  shop: openShop, saveShop, closeModal, saveEditor, confirmSell, doMerge, doReplace,
-  backup: doBackup,
-  restore: () => $("#restoreFile").click(),
-  logout: () => { if (confirm("Logout karein?")) signOut(auth); },
-  cam: () => $("#f_cam").click(), gal: () => $("#f_gal").click(),
-  rmphoto: () => { editPhoto = ""; showPrev(); }
+  scansearch: async () => { const v = await scanBarcode(); if (v) { query = v; $("#q").value = v; tab = "stock"; render(); } },
+  scanserial: async () => { const v = await scanBarcode(); if (v && $("#f_serial")) $("#f_serial").value = v; },
+  labelscan: () => $("#f_scan").click(), cam: () => $("#f_cam").click(), gal: () => $("#f_gal").click(),
+  rmph: d => { editPhotos.splice(+d.i, 1); renderThumbs(); },
+  saveEditor, closeModal, closeSub,
+  billpdf: d => { const b = bills.find(x => x.id === d.id); if (b) makePdf(b); },
+  billedit: d => openBill({ billId: d.id }), billdel: d => deleteBill(d.id),
+  addDrive: openPicker, pickDone, scanadd: scanAdd,
+  addEw: () => { const l = ewLine(); if (!l) { toast("Pehle E-waste tab mein category banao"); return; } draft.lines.push(l); renderLines(); },
+  addCustom: () => { draft.lines.push({ t: "custom", driveId: "", catId: "", desc: "", spec: "", serial: "", unit: "pc", qty: 1, rate: 0 }); renderLines(); },
+  rmline: d => { draft.lines.splice(+d.i, 1); renderLines(); },
+  saveBill: () => saveBill(false), saveBillPdf: () => saveBill(true),
+  catedit: d => openCat(d.id), catsave: saveCat, catdel: d => { if (confirm("Category delete karein?")) { deleteDoc(doc(db, "ewaste", d.id)); closeModal(); } },
+  seedcats: seedCats, ewbill: () => openBill({ ewaste: true }),
+  shop: openShop, saveShop, backup: doBackup, restore: () => $("#restoreFile").click(), doMerge, doReplace,
+  logout: () => { if (confirm("Logout karein?")) signOut(auth); }
 };
 document.addEventListener("click", e => {
   const el = e.target.closest("[data-act]");
   if (el && actions[el.dataset.act]) actions[el.dataset.act](el.dataset);
 });
 $("#restoreFile").addEventListener("change", onRestoreFile);
+
 </script>
 </body>
 </html>
