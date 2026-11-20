@@ -122,7 +122,7 @@ label{display:block;font-size:12px;color:var(--muted);margin:10px 0 3px}
       <div id="ewList"></div>
     </section>
 
-    <div class="foot">Powered by Silicon Traders • v3</div>
+    <div class="foot">Powered by Silicon Traders • v3.1</div>
   </div>
   <button class="btn primary fab" id="fab" data-act="fab">+ Add Drive</button>
   <input type="file" id="restoreFile" accept=".json,application/json" class="hidden">
@@ -215,7 +215,14 @@ try {
   db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
 } catch (e) { document.body.innerHTML = "<p style='padding:20px'>Firebase config error: " + esc(e.message) + "</p>"; }
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
-if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(() => {});
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  const hadController = !!navigator.serviceWorker.controller; let reloaded = false;
+  navigator.serviceWorker.register("sw.js").then(r => r.update()).catch(() => {});
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController || reloaded) return; reloaded = true;
+    if (!$("#modal").innerHTML) location.reload();
+  });
+}
 
 function welcomeName(u) {
   if (u.displayName) return u.displayName;

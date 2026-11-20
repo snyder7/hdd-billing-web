@@ -1,4 +1,4 @@
-const CACHE = "hddbm-v3";
+const CACHE = "hddbm-v31";
 const CORE = ["./", "./index.html", "./stock.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 const EXT = [
   "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
@@ -21,6 +21,6 @@ self.addEventListener("fetch", e => {
   if (CACHE_HOSTS.includes(url.hostname)) {
     e.respondWith(caches.match(req).then(h => h || fetch(req).then(store)));
   } else if (url.origin === location.origin) {
-    e.respondWith(fetch(req).then(store).catch(() => caches.match(req).then(h => h || caches.match("./index.html"))));
+    e.respondWith(fetch(req, { cache: "no-store" }).then(store).catch(() => caches.match(req).then(h => h || caches.match("./index.html"))));
   }
 });
