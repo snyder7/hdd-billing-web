@@ -1,5 +1,5 @@
-const CACHE = "hddbm-v2";
-const CORE = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
+const CACHE = "hddbm-v3";
+const CORE = ["./", "./index.html", "./stock.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 const EXT = [
   "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
   "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js",

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1565c0">
+<title>Silicon Traders - Stock List</title>
+<meta name="description" content="Silicon Traders: ON SALE HDD / SSD stock list with prices.">
+<meta property="og:title" content="Silicon Traders - ON SALE Stock List">
+<meta property="og:description" content="HDD / SSD ON SALE - photos aur price ke saath.">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{--ink:#172b4d;--muted:#607080;--bg:#f2f5f9;--blue:#1565c0;--green:#1b8a3a;--line:#e1e7ee}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px}
+header{background:linear-gradient(135deg,#0d47a1,#1976d2);color:#fff;padding:22px 16px 18px;text-align:center}
+header h1{margin:0;font-size:24px;letter-spacing:.3px}
+header .tag{margin-top:4px;font-size:14px;opacity:.9}
+header .contact{margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.cbtn{display:inline-block;padding:9px 16px;border-radius:99px;background:#fff;color:var(--blue);font-weight:700;text-decoration:none;font-size:14px}
+.cbtn.wa{background:#25d366;color:#fff}
+.wrap{max-width:900px;margin:0 auto;padding:12px}
+.tools{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+.chip{border:0;background:#fff;color:var(--ink);padding:8px 14px;border-radius:99px;font-size:13.5px;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08);font-family:inherit}
+.chip.on{background:var(--blue);color:#fff}
+input,select{padding:10px;border:1px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit;background:#fff}
+#q{flex:1;min-width:140px}
+.meta{color:var(--muted);font-size:12.5px;margin:2px 2px 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:10px}
+.card{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);display:flex;flex-direction:column}
+.ph{position:relative;aspect-ratio:1/1;background:#e9eef4;display:flex;align-items:center;justify-content:center;font-size:44px}
+.ph img{width:100%;height:100%;object-fit:cover}
+.ribbon{position:absolute;top:8px;left:0;background:#e53935;color:#fff;font-weight:800;font-size:12px;letter-spacing:.6px;padding:4px 10px 4px 8px;border-radius:0 6px 6px 0;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.cnt{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;font-size:11.5px;padding:2px 7px;border-radius:99px}
+.body{padding:10px 11px 12px;display:flex;flex-direction:column;gap:3px;flex:1}
+.kind{font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px}
+.name{font-weight:700;font-size:15px;line-height:1.25}
+.cap{font-size:13px;color:var(--muted)}
+.price{font-size:23px;font-weight:800;color:var(--green);margin-top:4px}
+.price small{font-size:12px;font-weight:600;color:var(--muted);margin-right:3px}
+.call{font-size:15px;font-weight:700;color:var(--muted);margin-top:6px}
+.ask{margin-top:auto;text-align:center;padding:9px;border-radius:9px;background:#e8f7ee;color:#127a33;font-weight:700;text-decoration:none;font-size:13.5px}
+.empty{text-align:center;color:var(--muted);padding:50px 10px}
+footer{text-align:center;color:var(--muted);font-size:12.5px;padding:20px 10px 30px}
+#lb{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:50;display:none;flex-direction:column}
+#lb.on{display:flex}
+#lb .strip{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory}
+#lb .strip img{flex:none;width:100%;height:100%;object-fit:contain;scroll-snap-align:center}
+#lb .x{position:absolute;top:10px;right:14px;color:#fff;font-size:30px;background:none;border:0}
+#lb .hint{color:#ccc;text-align:center;font-size:12px;padding:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="shopName">Silicon Traders</h1>
+  <div class="tag">ON SALE • Stock List</div>
+  <div class="contact" id="contact"></div>
+</header>
+<div class="wrap">
+  <div class="tools">
+    <input id="q" placeholder="Search (Seagate, 500GB, SSD...)">
+    <select id="sort"><option value="new">Naya pehle</option><option value="low">Price: kam se zyada</option><option value="high">Price: zyada se kam</option></select>
+  </div>
+  <div class="tools" id="chips"></div>
+  <div class="meta" id="meta">Load ho raha hai…</div>
+  <div class="grid" id="grid"></div>
+</div>
+<footer>Powered by Silicon Traders</footer>
+<div id="lb"><button class="x" id="lbx">×</button><div class="strip" id="strip"></div><div class="hint">Swipe karke aur photos dekho • Band karne ke liye × dabao</div></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getFirestore, collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+const app = initializeApp({
+  apiKey: "AIzaSyCtthl5l3xK2V5ptFXAjxhrO-hTFws6O78",
+  authDomain: "hdd-billing-manager.firebaseapp.com",
+  projectId: "hdd-billing-manager",
+  storageBucket: "hdd-billing-manager.firebasestorage.app",
+  messagingSenderId: "14875151294",
+  appId: "1:14875151294:web:70db0a4e0d0e9f8349c7ef"
+});
+const db = getFirestore(app);
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const rupee = n => "₹" + Math.round(n).toLocaleString("en-IN");
+let list = [], meta = {}, kind = "All", query = "", sort = "new";
+
+function waNumber() { const d = String(meta.phone || "").replace(/\D/g, ""); return d.length === 10 ? "91" + d : d; }
+function renderHeader() {
+  if (meta.name) { $("#shopName").textContent = meta.name; document.title = meta.name + " - Stock List"; }
+  const c = [], n = waNumber();
+  if (meta.phone) c.push(`<a class="cbtn" href="tel:${esc(meta.phone)}">📞 Call</a>`);
+  if (n) c.push(`<a class="cbtn wa" href="https://wa.me/${n}?text=${encodeURIComponent("Hello, mujhe stock list ke baare mein poochna hai.")}">WhatsApp</a>`);
+  $("#contact").innerHTML = c.join("");
+}
+function render() {
+  const kinds = ["All", ...new Set(list.map(i => i.kind))];
+  $("#chips").innerHTML = kinds.map(k => `<button class="chip${k === kind ? " on" : ""}" data-k="${esc(k)}">${esc(k)}</button>`).join("");
+  const q = query.trim().toLowerCase();
+  let l = list.filter(i => (kind === "All" || i.kind === kind) && (!q || [i.kind, i.brandModel, i.capacity, i.condition].some(s => String(s).toLowerCase().includes(q))));
+  const price = i => i.sellPrice > 0 ? i.sellPrice : Infinity;
+  l.sort(sort === "low" ? (a, b) => price(a) - price(b) : sort === "high" ? (a, b) => (b.sellPrice || 0) - (a.sellPrice || 0) : (a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  const last = list.reduce((m, i) => Math.max(m, i.updatedAt || 0), 0);
+  $("#meta").textContent = list.length ? `${l.length} drives ON SALE` + (last ? " • Updated: " + new Date(last).toLocaleDateString("en-IN") : "") : "";
+  const n = waNumber();
+  $("#grid").innerHTML = l.length ? l.map(i => {
+    const ph = (i.photos || [])[0];
+    const msg = encodeURIComponent(`Hello, mujhe ye chahiye: ${i.kind} ${i.brandModel} ${i.capacity}` + (i.sellPrice > 0 ? ` (${rupee(i.sellPrice)})` : ""));
+    return `<div class="card"><div class="ph" ${ph ? `data-id="${esc(i.id)}" style="cursor:pointer"` : ""}>
+      ${ph ? `<img loading="lazy" src="${ph}" alt="">` : "💽"}<span class="ribbon">ON SALE</span>${(i.photos || []).length > 1 ? `<span class="cnt">📷 ${i.photos.length}</span>` : ""}</div>
+      <div class="body"><div class="kind">${esc(i.kind)}</div><div class="name">${esc(i.brandModel)}</div>
+      <div class="cap">${esc(i.capacity)}${i.condition ? " • " + esc(i.condition) : ""}${i.warranty ? "<br>Warranty: " + esc(i.warranty) : ""}</div>
+      ${i.sellPrice > 0 ? `<div class="price"><small>Price</small>${rupee(i.sellPrice)}</div>` : `<div class="call">Price ke liye call karo</div>`}
+      ${n ? `<a class="ask" href="https://wa.me/${n}?text=${msg}">WhatsApp par poochho</a>` : ""}</div></div>`;
+  }).join("") : `<div class="empty" style="grid-column:1/-1">${list.length ? "Koi drive nahi mila." : "Abhi stock update ho raha hai. Thodi der baad dekhein."}</div>`;
+}
+onSnapshot(collection(db, "public_stock"), s => { list = s.docs.map(d => d.data()); render(); },
+  () => { $("#meta").textContent = "Stock load nahi ho paya. Thodi der baad try karo."; });
+onSnapshot(doc(db, "public_meta", "shop"), s => { meta = s.exists() ? s.data() : {}; renderHeader(); render(); }, () => {});
+$("#chips").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) { kind = b.dataset.k; render(); } });
+$("#q").addEventListener("input", e => { query = e.target.value; render(); });
+$("#sort").addEventListener("change", e => { sort = e.target.value; render(); });
+$("#grid").addEventListener("click", e => {
+  const p = e.target.closest(".ph[data-id]"); if (!p) return;
+  const it = list.find(x => x.id === p.dataset.id); if (!it) return;
+  $("#strip").innerHTML = (it.photos || []).map(s => `<img src="${s}" alt="">`).join(""); $("#lb").classList.add("on");
+});
+$("#lbx").addEventListener("click", () => $("#lb").classList.remove("on"));
+</script>
+</body>
+</html>

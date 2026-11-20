@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>HDD Bill Manager</title>
+<title>Silicon Traders Inventory</title>
 <style>
 :root{--ink:#172b4d;--muted:#607080;--bg:#f5f7fa;--card:#fff;--blue:#1565c0;--green:#2e7d32;--red:#c62828;--line:#dfe5ec}
 *{box-sizing:border-box}
@@ -15,7 +15,7 @@ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-
 body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 .hidden{display:none!important}
 .wrap{max-width:760px;margin:0 auto;padding:14px}
-h1{font-size:22px;margin:0}
+h1{font-size:20px;margin:0}
 h3{margin:0 0 6px}
 .sub{color:var(--muted);font-size:12.5px;margin:2px 0 8px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -74,7 +74,7 @@ label{display:block;font-size:12px;color:var(--muted);margin:10px 0 3px}
 
 <div id="login" class="hidden">
   <form class="box" id="loginForm">
-    <h1>HDD Bill Manager</h1>
+    <h1>Silicon Traders Inventory</h1>
     <div class="sub">Sirf authorized login. Dono bhai ek hi data dekhenge.</div>
     <label>Email</label><input id="l_email" type="email" autocomplete="username" required>
     <label>Password</label><input id="l_pass" type="password" autocomplete="current-password" required>
@@ -86,7 +86,7 @@ label{display:block;font-size:12px;color:var(--muted);margin:10px 0 3px}
 
 <div id="app" class="hidden">
   <div class="wrap">
-    <div class="top"><h1>HDD / SSD Manager</h1><span class="pill" id="sync">...</span></div>
+    <div class="top"><h1>Silicon Traders Inventory</h1><span class="pill" id="sync">...</span></div>
     <div class="sub" id="who"></div>
     <div class="row">
       <button class="btn sm" data-act="shop">⚙ Shop</button>
@@ -101,6 +101,7 @@ label{display:block;font-size:12px;color:var(--muted);margin:10px 0 3px}
     </div>
 
     <section id="tab_stock">
+      <button class="btn primary" style="width:100%;margin-bottom:8px" data-act="share">🔗 Public Stock List / WhatsApp par bhejo</button>
       <div class="summary" id="summary"></div>
       <div class="row" id="filters"></div>
       <div class="inline" style="margin-bottom:10px"><input id="q" placeholder="Search serial / model / capacity / buyer / invoice"><button class="btn" data-act="scansearch" title="Barcode scan">📷</button></div>
@@ -121,7 +122,7 @@ label{display:block;font-size:12px;color:var(--muted);margin:10px 0 3px}
       <div id="ewList"></div>
     </section>
 
-    <div class="foot">Powered by Silicon Traders • v2</div>
+    <div class="foot">Powered by Silicon Traders • v3</div>
   </div>
   <button class="btn primary fab" id="fab" data-act="fab">+ Add Drive</button>
   <input type="file" id="restoreFile" accept=".json,application/json" class="hidden">
@@ -178,9 +179,10 @@ let user = null, items = [], bills = [], ewaste = [], filter = "All", query = ""
 let editPhotos = [], editing = null, draft = null, restoreData = null;
 let shop = { name: "", address: "", phone: "", gstin: "", gstPercent: "", prefix: "INV-", nextNo: 1 };
 let unsubs = [], pendingWrites = false;
+let publicMap = new Map(), publicMeta = null, publicServer = false, driveServer = false, metaLoaded = false, shopLoaded = false, ruleWarned = false, syncTimer = null, syncing = false, syncAgain = false;
 
 function blankItem() {
-  return { id: newId(), createdAt: Date.now(), kind: "HDD", brandModel: "", capacity: "", serial: "", health: "", hours: "", condition: "Good", warranty: "", buyPrice: "", sellPrice: "", status: "In Stock", photo: "", photos: [], buyer: "", notes: "", buyerPhone: "", payment: "Cash", soldDate: "", invoiceNo: "" };
+  return { id: newId(), createdAt: Date.now(), kind: "HDD", brandModel: "", capacity: "", serial: "", health: "", hours: "", condition: "Good", warranty: "", buyPrice: "", sellPrice: "", status: "In Stock", photo: "", photos: [], buyer: "", notes: "", buyerPhone: "", payment: "Cash", soldDate: "", invoiceNo: "", showPublic: "1" };
 }
 function normalize(o) {
   const b = blankItem(), r = { ...b };
@@ -215,6 +217,13 @@ try {
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(() => {});
 
+function welcomeName(u) {
+  if (u.displayName) return u.displayName;
+  const raw = (u.email || "").split("@")[0];
+  let n = raw.replace(/[-_.]?hdd$/i, "") || raw;
+  n = n.split(/[-_.0-9]/)[0] || n;
+  return n.charAt(0).toUpperCase() + n.slice(1).toLowerCase();
+}
 function authMsg(code) {
   if (["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found", "auth/invalid-email"].includes(code)) return "Email ya password galat hai.";
   if (code === "auth/network-request-failed") return "Internet nahi hai. Pehli baar login ke liye internet chahiye.";
@@ -229,19 +238,25 @@ $("#loginForm").addEventListener("submit", async e => {
 });
 onAuthStateChanged(auth, u => {
   user = u;
-  if (u) { $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); $("#who").textContent = u.email; startListeners(); }
+  if (u) { $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); $("#who").textContent = "Welcome " + welcomeName(u); startListeners(); }
   else { stopListeners(); $("#app").classList.add("hidden"); $("#login").classList.remove("hidden"); }
 });
 function startListeners() {
   stopListeners();
-  const watch = (name, fn) => unsubs.push(onSnapshot(collection(db, name), snap => { fn(snap.docs.map(d => d.data())); pendingWrites = snap.metadata.hasPendingWrites; render(); updateSync(); }, err => toast("Sync error: " + err.code)));
-  watch("drives", a => { items = a.map(normalize); });
+  const watch = (name, fn) => unsubs.push(onSnapshot(collection(db, name), snap => { fn(snap.docs.map(d => d.data()), snap); pendingWrites = snap.metadata.hasPendingWrites; render(); updateSync(); }, err => toast("Sync error: " + err.code)));
+  watch("drives", (a, snap) => { items = a.map(normalize); if (!snap.metadata.fromCache) driveServer = true; scheduleSync(); });
   watch("bills", a => { bills = a.map(normBill); });
   watch("ewaste", a => { ewaste = a.map(normEw).sort((x, y) => x.name.localeCompare(y.name)); });
-  unsubs.push(onSnapshot(doc(db, "settings", "shop"), s => { if (s.exists()) shop = { ...shop, ...s.data() }; }));
+  unsubs.push(onSnapshot(doc(db, "settings", "shop"), s => { if (s.exists()) shop = { ...shop, ...s.data() }; if (!s.metadata.fromCache) shopLoaded = true; scheduleSync(); }));
+  unsubs.push(onSnapshot(collection(db, "public_stock"), snap => { publicMap = new Map(snap.docs.map(d => [d.id, d.data()])); if (!snap.metadata.fromCache) publicServer = true; scheduleSync(); },
+    () => { if (!ruleWarned) { ruleWarned = true; toast("Public list ke liye Firebase rules update karo (UPDATE.md dekho)."); } }));
+  unsubs.push(onSnapshot(doc(db, "public_meta", "shop"), s => { publicMeta = s.exists() ? s.data() : null; if (!s.metadata.fromCache) metaLoaded = true; scheduleSync(); }, () => {}));
   updateSync();
 }
-function stopListeners() { unsubs.forEach(u => u()); unsubs = []; items = []; bills = []; ewaste = []; render(); }
+function stopListeners() {
+  unsubs.forEach(u => u()); unsubs = []; items = []; bills = []; ewaste = []; publicMap = new Map(); publicMeta = null;
+  publicServer = driveServer = metaLoaded = shopLoaded = false; render();
+}
 function updateSync() {
   const p = $("#sync");
   if (!navigator.onLine) { p.textContent = "Offline"; p.className = "pill off"; }
@@ -273,14 +288,13 @@ function renderStock() {
   $("#list").innerHTML = list.length ? list.map(card).join("") : `<div class="empty">${items.length ? "Koi drive nahi mila." : "Abhi koi drive nahi hai. + Add Drive dabao."}</div>`;
 }
 function card(i) {
-  const margin = num(i.sellPrice) - num(i.buyPrice), sold = i.status === "Sold";
+  const sold = i.status === "Sold", pub = !sold && i.showPublic !== "0";
   return `<div class="card">
     <div class="head">${i.photo ? `<img class="th" loading="lazy" src="${i.photo}" alt="">` : ""}
       <div><div class="t">${esc(i.kind)} • ${esc(i.brandModel || "Unnamed")} • ${esc(i.capacity)}</div>
-      <div class="${sold ? "st-sold" : "st-in"}">${esc(i.status)}${sold && i.soldDate ? " • " + esc(i.soldDate) : ""}${i.photos.length > 1 ? `<span class="badge">📷 ${i.photos.length}</span>` : ""}</div></div></div>
-    <div class="d">Serial: ${esc(i.serial || "Not entered")}<br>
-      Health: ${esc(i.health || "—")}% | Power-on: ${esc(i.hours || "—")} hrs | ${esc(i.condition)}<br>
-      Buy: ₹${esc(i.buyPrice || "0")} | Sell: ₹${esc(i.sellPrice || "0")} | Margin: ₹${m0(margin)}
+      <div class="${sold ? "st-sold" : "st-in"}">${esc(i.status)}${sold && i.soldDate ? " • " + esc(i.soldDate) : ""}${i.photos.length > 1 ? `<span class="badge">📷 ${i.photos.length}</span>` : ""}${sold ? "" : `<span class="badge">${pub ? "🌐 Public" : "🔒 Hidden"}</span>`}</div></div></div>
+    <div class="d">Serial: ${esc(i.serial || "Not entered")}<br>${esc(i.condition)}${i.warranty ? " • Warranty: " + esc(i.warranty) : ""}<br>
+      Selling price: <b style="font-size:16px;color:var(--green)">${num(i.sellPrice) ? "₹" + m0(num(i.sellPrice)) : "—"}</b>
       ${sold ? `<br>Buyer: ${esc(i.buyer || "—")}${i.invoiceNo ? " | " + esc(i.invoiceNo) : ""}` : ""}</div>
     <div class="acts">
       <button class="btn" data-act="edit" data-id="${i.id}">Edit</button>
@@ -450,6 +464,7 @@ function openEditor(id) {
     ${f("f_buy", "Purchase price ₹", d.buyPrice, "", 'inputmode="decimal"')}
     ${f("f_sell", "Selling price ₹", d.sellPrice, "", 'inputmode="decimal"')}
     ${f("f_notes", "Notes / defects (optional)", d.notes)}
+    <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="f_public" style="width:20px;height:20px" ${d.showPublic !== "0" ? "checked" : ""}> Public stock list mein dikhao (ON SALE)</label>
     <label>Photos (max ${MAX_PHOTOS})</label>
     <div class="thumbs" id="f_thumbs"></div>
     <div class="row">
@@ -510,7 +525,7 @@ async function saveEditor() {
   if (serial && items.some(x => x.id !== base.id && x.serial.toLowerCase() === serial.toLowerCase()) &&
       !confirm("Is serial ka drive pehle se maujood hai. Phir bhi save karein?")) return;
   Object.assign(base, { kind: g("f_kind"), brandModel: model, capacity: g("f_capacity"), serial, health: h, hours: g("f_hours"),
-    condition: g("f_cond"), warranty: g("f_warranty"), buyPrice: g("f_buy"), sellPrice: g("f_sell"), notes: g("f_notes"), photos: [...editPhotos] });
+    condition: g("f_cond"), warranty: g("f_warranty"), buyPrice: g("f_buy"), sellPrice: g("f_sell"), notes: g("f_notes"), photos: [...editPhotos], showPublic: $("#f_public").checked ? "1" : "0" });
   closeModal(); putItem(base); toast("Drive save ho gaya");
 }
 
@@ -695,7 +710,7 @@ function saveShop() {
   const s = { name: g("sh_name"), address: g("sh_addr"), phone: g("sh_phone"), gstin: g("sh_gstin").toUpperCase(), gstPercent: g("sh_gst"), prefix: g("sh_prefix") || "INV-", nextNo: Math.max(1, parseInt(g("sh_next")) || 1) };
   shop = { ...shop, ...s };
   setDoc(doc(db, "settings", "shop"), s, { merge: true }).catch(e => toast("Save error: " + (e.code || e.message)));
-  closeModal(); toast("Settings save ho gayi");
+  closeModal(); toast("Settings save ho gayi"); scheduleSync();
 }
 
 // ---------- PDF ----------
@@ -732,7 +747,7 @@ async function makePdf(bill) {
     const split = (s, w, size, bold) => { font(size, bold); return pdf.splitTextToSize(String(s), w); };
     const wrap = (s, x, y, w, size = 12, bold = false) => { const ls = split(s, w, size, bold); pdf.text(ls, x, y + size); return y + ls.length * size * 1.25; };
     let y = 62;
-    text(shop.name || "HDD / SSD Shop", M, 55, 20, true); text("INVOICE", R, 55, 20, true, "right");
+    text(shop.name || "Silicon Traders", M, 55, 20, true); text("INVOICE", R, 55, 20, true, "right");
     if (shop.address) y = wrap(shop.address, M, y, 300, 11);
     if (shop.phone) y = wrap("Phone: " + shop.phone, M, y, 300, 11);
     if (shop.gstin) y = wrap("GSTIN: " + shop.gstin, M, y, 300, 11);
@@ -798,9 +813,9 @@ async function makePdf(bill) {
 
 // ---------- backup / restore ----------
 async function doBackup() {
-  const data = { app: "hdd-bill-manager", version: 5, exportedAt: new Date().toISOString(), shop, items, bills, ewaste };
+  const data = { app: "silicon-traders-inventory", version: 5, exportedAt: new Date().toISOString(), shop, items, bills, ewaste };
   const d = new Date(), stamp = d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0") + "_" + String(d.getHours()).padStart(2, "0") + String(d.getMinutes()).padStart(2, "0");
-  await shareOrDownload(new Blob([JSON.stringify(data)], { type: "application/json" }), `HDD_Bill_Manager_Backup_${stamp}.json`, "HDD Bill Manager backup");
+  await shareOrDownload(new Blob([JSON.stringify(data)], { type: "application/json" }), `Silicon_Traders_Backup_${stamp}.json`, "Silicon Traders backup");
 }
 async function onRestoreFile(e) {
   const file = e.target.files[0]; e.target.value = ""; if (!file) return;
@@ -837,6 +852,78 @@ async function doReplace() {
   catch (e) { toast("Restore error: " + (e.code || e.message)); }
 }
 
+// ---------- public stock sync + share ----------
+function scheduleSync() { clearTimeout(syncTimer); syncTimer = setTimeout(syncPublic, 2000); }
+function hash(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+const photoKey = arr => arr.length + ":" + arr.map(p => p.length + p.slice(-24)).join("|");
+const loadImg = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+async function thumbOf(src) {
+  const img = await loadImg(src), s = Math.min(1, 480 / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement("canvas"); c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  let q = 0.6, out = c.toDataURL("image/jpeg", q);
+  while (out.length > 60000 && q > 0.3) { q -= 0.08; out = c.toDataURL("image/jpeg", q); }
+  return out;
+}
+const thumbCache = new Map();
+async function thumbsFor(it, key) {
+  const c = thumbCache.get(it.id); if (c && c.key === key) return c.th;
+  const th = []; for (const p of it.photos.slice(0, 3)) { try { th.push(await thumbOf(p)); } catch {} }
+  thumbCache.set(it.id, { key, th }); return th;
+}
+const publicItems = () => items.filter(i => i.status === "In Stock" && i.showPublic !== "0").sort((a, b) => a.kind.localeCompare(b.kind) || num(a.sellPrice) - num(b.sellPrice));
+async function syncPublic() {
+  if (!user || !driveServer || !publicServer) return;
+  if (syncing) { syncAgain = true; return; }
+  syncing = true;
+  try {
+    const want = publicItems(), ids = new Set(want.map(i => i.id)), ops = [];
+    for (const it of want) {
+      const key = photoKey(it.photos);
+      const base = { id: it.id, kind: it.kind, brandModel: it.brandModel, capacity: it.capacity, condition: it.condition, warranty: it.warranty, sellPrice: num(it.sellPrice), createdAt: it.createdAt };
+      const sig = hash(JSON.stringify(base) + key), cur = publicMap.get(it.id);
+      if (cur && cur.sig === sig) continue;
+      const photos = await thumbsFor(it, key);
+      ops.push(b => b.set(doc(db, "public_stock", it.id), { ...base, photos, sig, updatedAt: Date.now() }));
+    }
+    for (const id of publicMap.keys()) if (!ids.has(id)) ops.push(b => b.delete(doc(db, "public_stock", id)));
+    if (ops.length) await writeMany(ops);
+    if (metaLoaded && shopLoaded && (publicMeta ? (publicMeta.name !== shop.name || publicMeta.phone !== shop.phone || publicMeta.address !== shop.address) : (shop.name || shop.phone))) {
+      await setDoc(doc(db, "public_meta", "shop"), { name: shop.name || "", phone: shop.phone || "", address: shop.address || "", updatedAt: Date.now() });
+    }
+  } catch (e) { console.warn("public sync", e); }
+  finally { syncing = false; if (syncAgain) { syncAgain = false; setTimeout(syncPublic, 800); } }
+}
+const publicLink = () => new URL("stock.html", location.href).href;
+function listText() {
+  const list = publicItems();
+  let t = `*${shop.name || "Silicon Traders"} - Stock List*\n(${today()})\n\n`;
+  list.forEach((i, n) => { t += `${n + 1}. ${i.kind} ${i.brandModel} ${i.capacity}`.replace(/\s+/g, " ") + ` - *${num(i.sellPrice) ? "₹" + m0(num(i.sellPrice)) : "Call for price"}*\n`; });
+  t += `\n✅ ON SALE\nPhotos ke saath poori list: ${publicLink()}`;
+  if (shop.phone) t += `\nCall / WhatsApp: ${shop.phone}`;
+  return t;
+}
+function copyText(t) {
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(() => toast("Copy ho gaya"), () => prompt("Copy karo:", t));
+  else prompt("Copy karo:", t);
+}
+function openShare() {
+  openModal(`<h3>Public Stock List</h3>
+    <p class="sub">Ye link kholne par koi bhi (bina login) sirf ON SALE drives aur unke selling price dekh sakta hai. Serial, buying price, health jaisi cheezein bilkul nahi dikhti.</p>
+    <label>Public link</label><input readonly value="${esc(publicLink())}" onclick="this.select()">
+    <div class="sub">Abhi public list mein <b>${publicItems().length}</b> drives hain.</div>
+    <div class="row">
+      <button class="btn primary grow" data-act="wa">WhatsApp par link bhejo</button>
+      <button class="btn grow" data-act="copylink">Link copy</button>
+    </div>
+    <div class="row">
+      <button class="btn grow" data-act="walist">WhatsApp par poori list (text)</button>
+      <button class="btn grow" data-act="copylist">List copy</button>
+    </div>
+    <div class="sub">WhatsApp group banakar uska link group mein bhej do; list apne aap update hoti rehti hai. Kisi drive ko chhupana ho to Edit mein "Public stock list mein dikhao" band karo.</div>
+    <button class="btn grow" style="width:100%" data-act="closeModal">Band karo</button>`);
+}
+
 // ---------- actions ----------
 const byId = id => items.find(x => x.id === id);
 const actions = {
@@ -862,6 +949,9 @@ const actions = {
   saveBill: () => saveBill(false), saveBillPdf: () => saveBill(true),
   catedit: d => openCat(d.id), catsave: saveCat, catdel: d => { if (confirm("Category delete karein?")) { deleteDoc(doc(db, "ewaste", d.id)); closeModal(); } },
   seedcats: seedCats, ewbill: () => openBill({ ewaste: true }),
+  share: openShare, copylink: () => copyText(publicLink()), copylist: () => copyText(listText()),
+  wa: () => window.open("https://wa.me/?text=" + encodeURIComponent((shop.name || "Silicon Traders") + " - ON SALE stock list (photo aur price ke saath):\n" + publicLink()), "_blank"),
+  walist: async () => { const tx = listText(); if (navigator.share) { try { await navigator.share({ text: tx }); return; } catch (e) { if (e.name === "AbortError") return; } } window.open("https://wa.me/?text=" + encodeURIComponent(tx), "_blank"); },
   shop: openShop, saveShop, backup: doBackup, restore: () => $("#restoreFile").click(), doMerge, doReplace,
   logout: () => { if (confirm("Logout karein?")) signOut(auth); }
 };

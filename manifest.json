@@ -1,6 +1,6 @@
 {
-  "name": "HDD Bill Manager",
-  "short_name": "HDD Bills",
+  "name": "Silicon Traders Inventory",
+  "short_name": "ST Inventory",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
