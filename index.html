@@ -68,6 +68,22 @@ label{display:block;font-size:12px;color:var(--muted);margin:10px 0 3px}
 #login .box{background:#fff;border-radius:16px;padding:22px;width:100%;max-width:380px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
 .err{color:var(--red);font-size:13px;min-height:18px;margin-top:8px}
 .fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));box-shadow:0 3px 10px rgba(0,0,0,.25);border-radius:99px;padding:13px 18px;font-size:15px;z-index:20}
+
+.seg{display:flex;gap:6px;margin:6px 0}
+.seg button{flex:1;border:2px solid var(--line);background:#fff;border-radius:10px;padding:11px 4px;font-size:15px;font-weight:700;color:var(--muted);font-family:inherit}
+.seg button.on{border-color:var(--blue);background:#e3ecf7;color:var(--blue)}
+.tiles{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+.tile{border:1px solid var(--line);background:#f7f9fc;border-radius:10px;padding:8px 11px;font-size:14px;font-weight:600;color:var(--ink);font-family:inherit;text-align:left}
+.tile small{display:block;font-weight:500;color:var(--green);font-size:12px}
+.tile.norate small{color:var(--red)}
+.tile.used{background:#e3f2e5;border-color:#a5d6a7}
+.line.bad{border-color:var(--red);background:#fff5f5}
+.sheet.fc{display:flex;flex-direction:column;overflow:hidden;padding:0}
+.sheet.fc .sbody{overflow:auto;padding:16px 16px 8px;flex:1}
+.sheet.fc .sfoot{padding:8px 16px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:#fff}
+.sfoot .total{margin:2px 0 8px;font-size:17px;text-align:left}
+.draftbar{background:#fff4e0;border:1px solid #ffd699;border-radius:10px;padding:9px 11px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13.5px;flex-wrap:wrap}
+.rates{display:flex;gap:8px;margin-top:8px}.rates label{flex:1;margin:0}.rates input{margin-top:3px}
 </style>
 </head>
 <body>
@@ -100,6 +116,8 @@ label{display:block;font-size:12px;color:var(--muted);margin:10px 0 3px}
       <button data-act="tab" data-v="ew">♻ E-waste</button>
     </div>
 
+    <div id="draftBar"></div>
+
     <section id="tab_stock">
       <button class="btn primary" style="width:100%;margin-bottom:8px" data-act="share">🔗 Public Stock List / WhatsApp par bhejo</button>
       <div class="summary" id="summary"></div>
@@ -110,19 +128,24 @@ label{display:block;font-size:12px;color:var(--muted);margin:10px 0 3px}
 
     <section id="tab_bills" class="hidden">
       <div class="summary" id="billSummary"></div>
+      <div class="row" id="billFilters"></div>
       <div id="billList"></div>
     </section>
 
     <section id="tab_ew" class="hidden">
       <div class="summary" id="ewSummary"></div>
       <div class="row">
-        <button class="btn sm grow" data-act="ewbill">🧾 Scrap bill banao</button>
-        <button class="btn sm grow" data-act="seedcats">+ Common categories</button>
+        <button class="btn primary grow" data-act="scrapbuy">⬇ Kharid Bill</button>
+        <button class="btn primary grow" data-act="scrapsale">⬆ Bikri Bill</button>
+      </div>
+      <div class="row">
+        <button class="btn sm grow" data-act="newcat">+ Category</button>
+        <button class="btn sm grow" data-act="seedcats">Common categories</button>
       </div>
       <div id="ewList"></div>
     </section>
 
-    <div class="foot">Powered by Silicon Traders • v3.1</div>
+    <div class="foot">Powered by Silicon Traders • v3.2</div>
   </div>
   <button class="btn primary fab" id="fab" data-act="fab">+ Add Drive</button>
   <input type="file" id="restoreFile" accept=".json,application/json" class="hidden">
@@ -179,6 +202,7 @@ let user = null, items = [], bills = [], ewaste = [], filter = "All", query = ""
 let editPhotos = [], editing = null, draft = null, restoreData = null;
 let shop = { name: "", address: "", phone: "", gstin: "", gstPercent: "", prefix: "INV-", nextNo: 1 };
 let unsubs = [], pendingWrites = false;
+let loadedDrives = false, loadedEw = false, resumed = false, billFilter = "All";
 let publicMap = new Map(), publicMeta = null, publicServer = false, driveServer = false, metaLoaded = false, shopLoaded = false, ruleWarned = false, syncTimer = null, syncing = false, syncAgain = false;
 
 function blankItem() {
@@ -200,11 +224,11 @@ function normalize(o) {
 function normBill(o) {
   return { id: String(o.id || newId()), createdAt: Number(o.createdAt) || Date.now(), invoiceNo: String(o.invoiceNo || ""), date: String(o.date || today()),
     buyer: String(o.buyer || ""), buyerPhone: String(o.buyerPhone || ""), payment: String(o.payment || "Cash"), notes: String(o.notes || ""),
-    showPhotos: o.showPhotos !== false, total: Number(o.total) || 0,
+    showPhotos: o.showPhotos !== false, total: Number(o.total) || 0, type: o.type === "buy" ? "buy" : "sale",
     lines: (Array.isArray(o.lines) ? o.lines : []).map(l => ({ t: l.t || "custom", driveId: l.driveId || "", catId: l.catId || "", desc: String(l.desc || ""), spec: String(l.spec || ""),
       serial: String(l.serial || ""), unit: String(l.unit || "pc"), qty: Number(l.qty) || 0, rate: Number(l.rate) || 0 })) };
 }
-const normEw = o => ({ id: String(o.id || newId()), name: String(o.name || ""), unit: o.unit === "kg" ? "kg" : "pc", rate: Number(o.rate) || 0, updatedAt: Number(o.updatedAt) || Date.now() });
+const normEw = o => ({ id: String(o.id || newId()), name: String(o.name || ""), unit: o.unit === "kg" ? "kg" : "pc", rate: Number(o.rate) || 0, buyRate: Number(o.buyRate) || 0, updatedAt: Number(o.updatedAt) || Date.now() });
 const billTotal = lines => Math.round(lines.reduce((a, l) => a + (+l.qty || 0) * (+l.rate || 0), 0) * 100) / 100;
 const billOfDrive = id => bills.find(b => b.lines.some(l => l.driveId === id));
 
@@ -251,9 +275,9 @@ onAuthStateChanged(auth, u => {
 function startListeners() {
   stopListeners();
   const watch = (name, fn) => unsubs.push(onSnapshot(collection(db, name), snap => { fn(snap.docs.map(d => d.data()), snap); pendingWrites = snap.metadata.hasPendingWrites; render(); updateSync(); }, err => toast("Sync error: " + err.code)));
-  watch("drives", (a, snap) => { items = a.map(normalize); if (!snap.metadata.fromCache) driveServer = true; scheduleSync(); });
+  watch("drives", (a, snap) => { items = a.map(normalize); if (!snap.metadata.fromCache) driveServer = true; loadedDrives = true; scheduleSync(); tryResume(); });
   watch("bills", a => { bills = a.map(normBill); });
-  watch("ewaste", a => { ewaste = a.map(normEw).sort((x, y) => x.name.localeCompare(y.name)); });
+  watch("ewaste", a => { ewaste = a.map(normEw).sort((x, y) => x.name.localeCompare(y.name)); loadedEw = true; tryResume(); });
   unsubs.push(onSnapshot(doc(db, "settings", "shop"), s => { if (s.exists()) shop = { ...shop, ...s.data() }; if (!s.metadata.fromCache) shopLoaded = true; scheduleSync(); }));
   unsubs.push(onSnapshot(collection(db, "public_stock"), snap => { publicMap = new Map(snap.docs.map(d => [d.id, d.data()])); if (!snap.metadata.fromCache) publicServer = true; scheduleSync(); },
     () => { if (!ruleWarned) { ruleWarned = true; toast("Public list ke liye Firebase rules update karo (UPDATE.md dekho)."); } }));
@@ -262,7 +286,7 @@ function startListeners() {
 }
 function stopListeners() {
   unsubs.forEach(u => u()); unsubs = []; items = []; bills = []; ewaste = []; publicMap = new Map(); publicMeta = null;
-  publicServer = driveServer = metaLoaded = shopLoaded = false; render();
+  publicServer = driveServer = metaLoaded = shopLoaded = false; loadedDrives = loadedEw = resumed = false; render();
 }
 function updateSync() {
   const p = $("#sync");
@@ -278,17 +302,19 @@ function render() {
   $("#tab_stock").classList.toggle("hidden", tab !== "stock");
   $("#tab_bills").classList.toggle("hidden", tab !== "bills");
   $("#tab_ew").classList.toggle("hidden", tab !== "ew");
-  $("#fab").textContent = tab === "stock" ? "+ Add Drive" : tab === "bills" ? "+ New Bill" : "+ Category";
+  $("#fab").textContent = tab === "stock" ? "+ Add Drive" : tab === "bills" ? "+ New Bill" : "+ Kharid Bill";
   if (tab === "stock") renderStock(); else if (tab === "bills") renderBills(); else renderEw();
+  renderDraftBar();
 }
 function renderStock() {
   $("#filters").innerHTML = FILTERS.map(f => `<button class="btn sm grow chip${f === filter ? " on" : ""}" data-act="filter" data-v="${f}">${f}</button>`).join("");
   const inStock = items.filter(i => i.status === "In Stock"), sold = items.filter(i => i.status === "Sold");
   const stockCost = inStock.reduce((a, i) => a + num(i.buyPrice), 0);
   const dRev = sold.reduce((a, i) => a + num(i.sellPrice), 0);
-  const eRev = bills.reduce((a, b) => a + b.lines.filter(l => l.t !== "drive").reduce((x, l) => x + l.qty * l.rate, 0), 0);
+  const eRev = bills.filter(b => b.type !== "buy").reduce((a, b) => a + b.lines.filter(l => l.t !== "drive").reduce((x, l) => x + l.qty * l.rate, 0), 0);
+  const eBuy = bills.filter(b => b.type === "buy").reduce((a, b) => a + b.total, 0);
   const profit = dRev - sold.reduce((a, i) => a + num(i.buyPrice), 0);
-  $("#summary").innerHTML = `Total: <b>${items.length}</b> &nbsp; In stock: <b>${inStock.length}</b> &nbsp; Sold: <b>${sold.length}</b><br>Stock value (cost): <b>₹${m0(stockCost)}</b><br>Drive sales: <b>₹${m0(dRev)}</b> &nbsp; Profit: <b>₹${m0(profit)}</b><br>E-waste / other sales: <b>₹${m0(eRev)}</b>`;
+  $("#summary").innerHTML = `Total: <b>${items.length}</b> &nbsp; In stock: <b>${inStock.length}</b> &nbsp; Sold: <b>${sold.length}</b><br>Stock value (cost): <b>₹${m0(stockCost)}</b><br>Drive sales: <b>₹${m0(dRev)}</b> &nbsp; Profit: <b>₹${m0(profit)}</b><br>E-waste / other sales: <b>₹${m0(eRev)}</b><br>E-waste kharid: <b>₹${m0(eBuy)}</b>`;
   const q = query.trim().toLowerCase();
   const list = items.filter(i => (filter === "All" || i.status === filter) &&
     (!q || [i.serial, i.brandModel, i.capacity, i.kind, i.status, i.buyer, i.invoiceNo].some(s => String(s).toLowerCase().includes(q)))).sort((a, b) => b.createdAt - a.createdAt);
@@ -301,7 +327,7 @@ function card(i) {
       <div><div class="t">${esc(i.kind)} • ${esc(i.brandModel || "Unnamed")} • ${esc(i.capacity)}</div>
       <div class="${sold ? "st-sold" : "st-in"}">${esc(i.status)}${sold && i.soldDate ? " • " + esc(i.soldDate) : ""}${i.photos.length > 1 ? `<span class="badge">📷 ${i.photos.length}</span>` : ""}${sold ? "" : `<span class="badge">${pub ? "🌐 Public" : "🔒 Hidden"}</span>`}</div></div></div>
     <div class="d">Serial: ${esc(i.serial || "Not entered")}<br>${esc(i.condition)}${i.warranty ? " • Warranty: " + esc(i.warranty) : ""}<br>
-      Selling price: <b style="font-size:16px;color:var(--green)">${num(i.sellPrice) ? "₹" + m0(num(i.sellPrice)) : "—"}</b>
+      Selling price: <b style="font-size:16px;color:var(--green)">${num(i.sellPrice) ? "₹" + m0(num(i.sellPrice)) : "DM for price"}</b>
       ${sold ? `<br>Buyer: ${esc(i.buyer || "—")}${i.invoiceNo ? " | " + esc(i.invoiceNo) : ""}` : ""}</div>
     <div class="acts">
       <button class="btn" data-act="edit" data-id="${i.id}">Edit</button>
@@ -311,37 +337,82 @@ function card(i) {
     </div></div>`;
 }
 function renderBills() {
-  const tot = bills.reduce((a, b) => a + b.total, 0);
-  $("#billSummary").innerHTML = `Total bills: <b>${bills.length}</b> &nbsp; Total sale: <b>₹${m0(tot)}</b>`;
-  const list = [...bills].sort((a, b) => b.createdAt - a.createdAt);
+  const sale = bills.filter(b => b.type !== "buy"), buy = bills.filter(b => b.type === "buy");
+  $("#billSummary").innerHTML = `Bikri bills: <b>${sale.length}</b> • ₹<b>${m0(sale.reduce((a, b) => a + b.total, 0))}</b><br>Kharid bills: <b>${buy.length}</b> • ₹<b>${m0(buy.reduce((a, b) => a + b.total, 0))}</b>`;
+  $("#billFilters").innerHTML = [["All", "All"], ["sale", "Bikri"], ["buy", "Kharid"]].map(([v, l]) => `<button class="btn sm grow chip${billFilter === v ? " on" : ""}" data-act="bfilter" data-v="${v}">${l}</button>`).join("");
+  const list = bills.filter(b => billFilter === "All" || (billFilter === "buy") === (b.type === "buy")).sort((a, b) => b.createdAt - a.createdAt);
   $("#billList").innerHTML = list.length ? list.map(b => {
-    const nd = b.lines.filter(l => l.t === "drive").length, ne = b.lines.length - nd;
-    return `<div class="card"><div class="t">${esc(b.invoiceNo || "(number pending)")} • ₹${m0(b.total)}</div>
-      <div class="d">${esc(b.date)} • ${esc(b.buyer || "Walk-in")}${b.buyerPhone ? " • " + esc(b.buyerPhone) : ""}<br>${nd} drive, ${ne} other item • ${esc(b.payment)}</div>
-      <div class="acts"><button class="btn primary" data-act="billpdf" data-id="${b.id}">Invoice PDF</button>
+    const nd = b.lines.filter(l => l.t === "drive").length, ne = b.lines.length - nd, isBuy = b.type === "buy";
+    return `<div class="card"><div class="t">${esc(b.invoiceNo || "(number pending)")} • ₹${m0(b.total)} <span class="badge">${isBuy ? "⬇ Kharid" : "⬆ Bikri"}</span></div>
+      <div class="d">${esc(b.date)} • ${esc(b.buyer || (isBuy ? "Seller" : "Walk-in"))}${b.buyerPhone ? " • " + esc(b.buyerPhone) : ""}<br>${nd ? nd + " drive, " : ""}${ne} other item • ${esc(b.payment)}</div>
+      <div class="acts"><button class="btn primary" data-act="billpdf" data-id="${b.id}">PDF</button>
       <button class="btn" data-act="billedit" data-id="${b.id}">Edit</button>
       <button class="btn danger" data-act="billdel" data-id="${b.id}">Delete</button></div></div>`;
   }).join("") : `<div class="empty">Abhi koi bill nahi. + New Bill dabao.</div>`;
 }
 function renderEw() {
-  const tot = bills.reduce((a, b) => a + b.lines.filter(l => l.t === "ewaste").reduce((x, l) => x + l.qty * l.rate, 0), 0);
-  $("#ewSummary").innerHTML = `Categories: <b>${ewaste.length}</b> &nbsp; E-waste sales: <b>₹${m0(tot)}</b><div class="sub" style="margin:4px 0 0">Rate yahan update karo; bill mein category chunte hi rate khud aa jayega.</div>`;
+  const sum = type => bills.filter(b => (b.type === "buy") === (type === "buy")).reduce((a, b) => a + b.lines.filter(l => l.t === "ewaste").reduce((x, l) => x + l.qty * l.rate, 0), 0);
+  $("#ewSummary").innerHTML = `Categories: <b>${ewaste.length}</b><br>E-waste kharid: <b>₹${m0(sum("buy"))}</b> &nbsp; Bikri: <b>₹${m0(sum("sale"))}</b><div class="sub" style="margin:4px 0 0">Rate yahin badlo: box mein naya rate likho, apne aap save ho jayega.</div>`;
   $("#ewList").innerHTML = ewaste.length ? ewaste.map(c => `<div class="card"><div class="head" style="justify-content:space-between;align-items:center">
-      <div><div class="t">${esc(c.name)}</div><div class="sub" style="margin:0">₹${esc(fq(c.rate))} per ${c.unit}</div></div>
-      <button class="btn" data-act="catedit" data-id="${c.id}">Rate / Edit</button></div></div>`).join("")
-    : `<div class="empty">Koi category nahi. + Category dabao ya "Common categories" se jodo.</div>`;
+      <div class="t">${esc(c.name)} <span class="badge">per ${c.unit}</span></div><button class="btn sm" data-act="catedit" data-id="${c.id}">Edit</button></div>
+      <div class="rates"><label>Kharid ₹<input inputmode="decimal" data-cat="${c.id}" data-rf="buyRate" value="${c.buyRate || ""}" placeholder="0"></label>
+      <label>Bikri ₹<input inputmode="decimal" data-cat="${c.id}" data-rf="rate" value="${c.rate || ""}" placeholder="0"></label></div></div>`).join("")
+    : `<div class="empty">Koi category nahi. "+ Category" dabao ya "Common categories" se jodo.</div>`;
 }
 $("#q").addEventListener("input", e => { query = e.target.value; render(); });
 
 // ---------- modals ----------
-function layer(sel, cls, html) {
-  const m = $(sel); m.innerHTML = `<div class="overlay ${cls}"><div class="sheet">${html}</div></div>`;
+let modalPushed = false, ignorePop = false;
+function layer(sel, cls, html, sheetCls = "") {
+  const m = $(sel); m.innerHTML = `<div class="overlay ${cls}"><div class="sheet ${sheetCls}">${html}</div></div>`;
   m.querySelector(".overlay").addEventListener("mousedown", e => { if (e.target.classList.contains("overlay")) { if (sel === "#modal") closeModal(); else if (sel === "#sub") closeSub(); } });
 }
-const openModal = h => layer("#modal", "", h);
+function pushModalState() { if (!modalPushed) { try { history.pushState({ m: 1 }, ""); modalPushed = true; } catch {} } }
+function openModal(h, sheetCls = "") { layer("#modal", "", h, sheetCls); pushModalState(); }
 const openSub = h => layer("#sub", "top", h);
 function closeSub() { $("#sub").innerHTML = ""; }
-function closeModal() { $("#modal").innerHTML = ""; $("#sub").innerHTML = ""; editPhotos = []; editing = null; draft = null; }
+function closeModal(discard = false) {
+  if (draft && !draft.id) { if (discard) clearDraftStore(); else saveDraft(false); }
+  $("#modal").innerHTML = ""; $("#sub").innerHTML = ""; editPhotos = []; editing = null; draft = null;
+  if (modalPushed) { modalPushed = false; ignorePop = true; setTimeout(() => { ignorePop = false; }, 600); try { history.back(); } catch {} }
+  renderDraftBar();
+}
+addEventListener("popstate", () => { if (ignorePop) { ignorePop = false; return; } if (modalPushed) { modalPushed = false; closeModal(); } });
+// ---- adhura bill (draft) ----
+const DRAFT_KEY = "stBillDraft";
+function loadDraft() { try { const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null"); return d && user && d.uid === user.uid ? d : null; } catch { return null; } }
+function clearDraftStore() { try { localStorage.removeItem(DRAFT_KEY); } catch {} }
+function saveDraft(open = true) {
+  if (!draft || draft.id || !user) return;
+  try {
+    if (!draft.lines.length && !draft.buyer && !draft.buyerPhone && !draft.notes) {
+      const cur = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+      if (cur && cur.sid === draft.sid) localStorage.removeItem(DRAFT_KEY);
+      return;
+    }
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...draft, open, uid: user.uid, savedAt: Date.now() }));
+  } catch {}
+}
+function renderDraftBar() {
+  const el = $("#draftBar"); if (!el) return;
+  const d = !draft && user ? loadDraft() : null;
+  if (!d) { el.innerHTML = ""; return; }
+  el.innerHTML = `<div class="draftbar"><div>📝 Adhura ${d.type === "buy" ? "kharid" : "bikri"} bill — ${(d.lines || []).length} item${d.buyer ? " • " + esc(d.buyer) : ""}</div>
+    <div><button class="btn sm primary" data-act="resume">Resume</button> <button class="btn sm" data-act="draftdel">Hatao</button></div></div>`;
+}
+function resumeDraft() {
+  const d = loadDraft(); if (!d) return;
+  draft = { ...d, lines: (d.lines || []).filter(l => l.t !== "drive" || !driveServer || items.some(i => i.id === l.driveId && i.status === "In Stock")) };
+  if (d.kind === "scrap") openScrap({ resume: true }); else openBill({ resume: true });
+}
+function tryResume() {
+  if (resumed || !loadedDrives || !loadedEw) return;
+  resumed = true;
+  const d = loadDraft();
+  if (d && d.open) { resumeDraft(); toast("Adhura bill wapas khola"); } else renderDraftBar();
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && draft && !draft.id) saveDraft(true); });
+addEventListener("pagehide", () => { if (draft && !draft.id) saveDraft(true); });
 function putItem(item) {
   item.updatedAt = Date.now(); item.updatedBy = user ? user.email : ""; item.photo = (item.photos || [])[0] || "";
   return setDoc(doc(db, "drives", item.id), item).catch(e => toast("Save error: " + (e.code || e.message)));
@@ -537,12 +608,12 @@ async function saveEditor() {
 }
 
 // ---------- bill ----------
-async function nextInvoiceNo() {
-  const ref = doc(db, "settings", "shop");
+async function nextInvoiceNo(type = "sale") {
+  const ref = doc(db, "settings", "shop"), buy = type === "buy";
   const r = await runTransaction(db, async tx => {
-    const s = await tx.get(ref), d = s.exists() ? s.data() : {}, cur = parseInt(d.nextNo) || 1;
-    tx.set(ref, { nextNo: cur + 1 }, { merge: true });
-    return { n: cur, prefix: d.prefix || "INV-" };
+    const s = await tx.get(ref), d = s.exists() ? s.data() : {}, nk = buy ? "nextBuyNo" : "nextNo", cur = parseInt(d[nk]) || 1;
+    tx.set(ref, { [nk]: cur + 1 }, { merge: true });
+    return { n: cur, prefix: buy ? (d.prefixBuy || "PUR-") : (d.prefix || "INV-") };
   });
   return r.prefix + String(r.n).padStart(4, "0");
 }
@@ -550,20 +621,23 @@ function specText(it) {
   return [it.health && `Health ${it.health}%`, it.hours && `Power-on ${it.hours} hrs`, it.condition && `Condition: ${it.condition}`, it.warranty && `Warranty: ${it.warranty}`].filter(Boolean).join(" | ");
 }
 const driveLine = it => ({ t: "drive", driveId: it.id, catId: "", desc: `${it.kind} ${it.brandModel} ${it.capacity}`.trim(), spec: specText(it), serial: it.serial, unit: "pc", qty: 1, rate: num(it.sellPrice) });
-function ewLine() {
-  const c = ewaste[0]; if (!c) return null;
-  return { t: "ewaste", driveId: "", catId: c.id, desc: c.name, spec: "", serial: "", unit: c.unit, qty: 1, rate: c.rate };
-}
+const catRate = (c, type) => type === "buy" ? (c.buyRate || 0) : (c.rate || 0);
+const ewLineFor = (c, type) => ({ t: "ewaste", driveId: "", catId: c.id, desc: c.name, spec: "", serial: "", unit: c.unit, qty: 0, rate: catRate(c, type) });
+function ewLine() { const c = ewaste[0]; if (!c) return null; const l = ewLineFor(c, "sale"); l.qty = 1; return l; }
+const lineBad = l => !(+l.qty > 0) || !(+l.rate > 0) || (l.t === "custom" && !String(l.desc).trim());
+const isScrapBill = b => b.type === "buy" || !b.lines.some(l => l.t === "drive");
+function cloneDraft(b, kind) { return { id: b.id, kind, type: b.type, buyer: b.buyer, buyerPhone: b.buyerPhone, payment: b.payment, notes: b.notes, showPhotos: b.showPhotos, lines: b.lines.map(l => ({ ...l })) }; }
 function openBill(o = {}) {
-  const b = o.billId ? bills.find(x => x.id === o.billId) : null;
-  draft = b ? { id: b.id, buyer: b.buyer, buyerPhone: b.buyerPhone, payment: b.payment, notes: b.notes, showPhotos: b.showPhotos, lines: b.lines.map(l => ({ ...l })) }
-            : { id: null, buyer: "", buyerPhone: "", payment: "Cash", notes: "", showPhotos: true, lines: [] };
-  if (o.driveId) { const it = items.find(x => x.id === o.driveId); if (it) { draft.lines.push(driveLine(it)); draft.buyer = it.buyer; draft.buyerPhone = it.buyerPhone; } }
-  if (o.ewaste) { const l = ewLine(); if (l) draft.lines.push(l); else toast("Pehle e-waste category banao"); }
-  openModal(`<h3>${b ? "Bill edit: " + esc(b.invoiceNo) : "Naya bill"}</h3>
-    <label>Customer / buyer</label><input id="b_buyer" value="${esc(draft.buyer)}">
-    <label>Phone (optional)</label><input id="b_phone" type="tel" value="${esc(draft.buyerPhone)}">
-    <label>Payment mode</label><select id="b_pay">${opts(PAYMENTS, draft.payment)}</select>
+  if (!o.resume) {
+    const b = o.billId ? bills.find(x => x.id === o.billId) : null;
+    draft = b ? cloneDraft(b, "bill") : { id: null, sid: newId(), kind: "bill", type: "sale", buyer: "", buyerPhone: "", payment: "Cash", notes: "", showPhotos: true, lines: [] };
+    if (o.driveId) { const it = items.find(x => x.id === o.driveId); if (it) { draft.lines.push(driveLine(it)); draft.buyer = it.buyer; draft.buyerPhone = it.buyerPhone; } }
+  }
+  const b = draft.id ? bills.find(x => x.id === draft.id) : null;
+  openModal(`<h3>${b ? "Bill edit: " + esc(b.invoiceNo) : "Naya drive bill"}</h3>
+    <label>Customer / buyer</label><input id="b_buyer" data-df="buyer" value="${esc(draft.buyer)}">
+    <label>Phone (optional)</label><input id="b_phone" data-df="buyerPhone" type="tel" value="${esc(draft.buyerPhone)}">
+    <label>Payment mode</label><select id="b_pay" data-df="payment">${opts(PAYMENTS, draft.payment)}</select>
     <label>Items</label><div id="b_lines"></div>
     <div class="row">
       <button class="btn sm grow" data-act="addDrive">+ Drive (stock se)</button>
@@ -572,41 +646,122 @@ function openBill(o = {}) {
       <button class="btn sm grow" data-act="addCustom">+ Custom</button>
     </div>
     <div class="total">Total: <span id="b_total"></span></div>
-    <label>Notes (optional)</label><input id="b_notes" value="${esc(draft.notes)}">
-    <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="b_photos" style="width:20px;height:20px" ${draft.showPhotos ? "checked" : ""}> Invoice mein drive ki photos lagao</label>
+    <label>Notes (optional)</label><input id="b_notes" data-df="notes" value="${esc(draft.notes)}">
+    <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="b_photos" data-df="showPhotos" style="width:20px;height:20px" ${draft.showPhotos ? "checked" : ""}> Invoice mein drive ki photos lagao</label>
     <div class="row" style="margin-top:12px">
-      <button class="btn grow" data-act="closeModal">Cancel</button>
+      <button class="btn grow" data-act="closeModal">Band karo</button>
       <button class="btn grow" data-act="saveBill">Save</button>
       <button class="btn primary grow" data-act="saveBillPdf">Save + Invoice</button>
     </div>`);
-  renderLines();
+  renderLines(); saveDraft(true);
+}
+function openScrap(o = {}) {
+  if (!o.resume) {
+    const b = o.billId ? bills.find(x => x.id === o.billId) : null;
+    draft = b ? cloneDraft(b, "scrap") : { id: null, sid: newId(), kind: "scrap", type: o.type || "buy", buyer: "", buyerPhone: "", payment: "Cash", notes: "", showPhotos: false, lines: [] };
+  }
+  const edit = !!draft.id;
+  openModal(`<div class="sbody">
+      <h3>♻ Scrap Bill${edit ? " (edit)" : ""}</h3>
+      <div class="seg"><button data-act="stype" data-v="buy">⬇ Kharid (Buy)</button><button data-act="stype" data-v="sale">⬆ Bikri (Sell)</button></div>
+      <label id="s_partyLbl"></label><input id="b_buyer" data-df="buyer" value="${esc(draft.buyer)}">
+      <label>Phone (optional)</label><input id="b_phone" data-df="buyerPhone" type="tel" value="${esc(draft.buyerPhone)}">
+      <label>Category dabao, item jud jayega</label><div class="tiles" id="s_tiles"></div>
+      <div class="row"><button class="btn sm grow" data-act="scrapNewCat">+ Nayi category</button><button class="btn sm grow" data-act="addCustom">+ Custom item</button></div>
+      <label>Items</label><div id="b_lines"></div>
+      <label id="s_payLbl"></label><select id="b_pay" data-df="payment">${opts(PAYMENTS, draft.payment)}</select>
+      <label>Notes (optional)</label><input id="b_notes" data-df="notes" value="${esc(draft.notes)}">
+      ${edit ? "" : `<button class="btn sm danger" style="margin-top:12px" data-act="draftdel2">🗑 Ye adhura bill hatao</button>`}
+    </div>
+    <div class="sfoot"><div class="total" id="s_total"></div>
+      <div class="row" style="margin:0"><button class="btn grow" data-act="closeModal">✕ Band karo</button><button class="btn grow" data-act="saveBill">Save</button><button class="btn primary grow" data-act="saveBillPdf">Save + PDF</button></div></div>`, "fc");
+  renderLines(); saveDraft(true);
+}
+function scrapChrome() {
+  if (!draft || draft.kind !== "scrap" || !$("#s_tiles")) return;
+  const buy = draft.type === "buy";
+  document.querySelectorAll(".seg button").forEach(b => b.classList.toggle("on", b.dataset.v === draft.type));
+  $("#s_partyLbl").textContent = buy ? "Kisse kharida (naam)" : "Kisko becha (naam)";
+  $("#s_payLbl").textContent = buy ? "Paisa kaise diya" : "Paisa kaise mila";
+  $("#s_tiles").innerHTML = ewaste.length ? ewaste.map(c => {
+    const r = catRate(c, draft.type), used = draft.lines.some(l => l.catId === c.id);
+    return `<button class="tile${r ? "" : " norate"}${used ? " used" : ""}" data-act="tile" data-id="${c.id}">${used ? "✓ " : ""}${esc(c.name)}<small>${r ? "₹" + fq(r) + "/" + c.unit : "rate daalna hai"}</small></button>`;
+  }).join("") : `<div class="sub">Abhi koi category nahi. "+ Nayi category" dabao.</div>`;
 }
 function renderLines() {
   const el = $("#b_lines"); if (!el || !draft) return;
+  const scrap = draft.kind === "scrap";
   el.innerHTML = draft.lines.length ? draft.lines.map((l, i) => {
     let head;
     if (l.t === "drive") head = `<b>${esc(l.desc)}</b>${l.serial ? `<div class="sub" style="margin:0">S/N: ${esc(l.serial)}</div>` : ""}`;
+    else if (l.t === "ewaste" && scrap) head = `<b>${esc(l.desc)}</b>`;
     else if (l.t === "ewaste") head = `<select data-li="${i}" data-f="cat">${ewaste.map(c => `<option value="${c.id}"${c.id === l.catId ? " selected" : ""}>${esc(c.name)}</option>`).join("")}${ewaste.some(c => c.id === l.catId) ? "" : `<option selected value="">${esc(l.desc)}</option>`}</select>`;
     else head = `<input data-li="${i}" data-f="desc" placeholder="Item ka naam" value="${esc(l.desc)}">`;
-    return `<div class="line"><div class="ld">${head}</div>
+    return `<div class="line${draft.showBad && lineBad(l) ? " bad" : ""}" id="ln_${i}"><div class="ld">${head}</div>
       <button class="btn sm danger rm" data-act="rmline" data-i="${i}">✕</button>
-      <div class="lq"><input data-li="${i}" data-f="qty" inputmode="decimal" value="${l.qty}" ${l.t === "drive" ? "disabled" : ""}><span>${esc(l.unit)}</span> × ₹<input data-li="${i}" data-f="rate" inputmode="decimal" value="${l.rate}"> = <b id="amt_${i}">₹${m0(l.qty * l.rate)}</b></div></div>`;
-  }).join("") : `<div class="sub">Abhi koi item nahi. Neeche se jodo.</div>`;
+      <div class="lq"><input data-li="${i}" data-f="qty" inputmode="decimal" placeholder="qty" value="${l.qty || ""}" ${l.t === "drive" ? "disabled" : ""}><span>${esc(l.unit)}</span> × ₹<input data-li="${i}" data-f="rate" inputmode="decimal" placeholder="rate" value="${l.rate || ""}"> = <b id="amt_${i}">₹${m0(l.qty * l.rate)}</b></div></div>`;
+  }).join("") : `<div class="sub">${scrap ? "Upar se category dabao." : "Abhi koi item nahi. Neeche se jodo."}</div>`;
+  if (scrap) scrapChrome();
   updTotal();
 }
-function updTotal() { const t = $("#b_total"); if (t && draft) t.textContent = "₹" + m0(billTotal(draft.lines)); }
+function updTotal() {
+  if (!draft) return;
+  const tot = billTotal(draft.lines), bad = draft.lines.filter(lineBad).length;
+  const t = $("#b_total"); if (t) t.textContent = "₹" + m0(tot);
+  const s = $("#s_total"); if (s) s.innerHTML = `Total: <b>₹${m0(tot)}</b> • ${draft.lines.length} item` + (bad ? ` <span style="color:var(--red);font-size:13px">• ${bad} mein qty/rate baaki</span>` : "");
+}
 document.addEventListener("input", e => {
-  const el = e.target; if (!draft || el.dataset.li === undefined || el.dataset.f === "cat") return;
+  const el = e.target; if (!draft) return;
+  if (el.dataset.df) { draft[el.dataset.df] = el.type === "checkbox" ? el.checked : el.value; saveDraft(true); return; }
+  if (el.dataset.li === undefined || el.dataset.f === "cat") return;
   const i = +el.dataset.li, f = el.dataset.f, l = draft.lines[i]; if (!l) return;
   l[f] = f === "desc" ? el.value : (parseFloat(el.value) || 0);
   const a = $("#amt_" + i); if (a) a.textContent = "₹" + m0(l.qty * l.rate);
-  updTotal();
+  const ln = $("#ln_" + i); if (ln && draft.showBad) ln.classList.toggle("bad", lineBad(l));
+  updTotal(); saveDraft(true);
 });
 document.addEventListener("change", e => {
-  const el = e.target; if (!draft || el.dataset.f !== "cat") return;
-  const l = draft.lines[+el.dataset.li], c = ewaste.find(x => x.id === el.value);
-  if (l && c) { Object.assign(l, { catId: c.id, desc: c.name, unit: c.unit, rate: c.rate }); renderLines(); }
+  const el = e.target;
+  if (draft && el.dataset.df) { draft[el.dataset.df] = el.type === "checkbox" ? el.checked : el.value; saveDraft(true); return; }
+  if (draft && el.dataset.f === "cat") {
+    const l = draft.lines[+el.dataset.li], c = ewaste.find(x => x.id === el.value);
+    if (l && c) { Object.assign(l, { catId: c.id, desc: c.name, unit: c.unit, rate: catRate(c, draft.type) }); renderLines(); saveDraft(true); }
+    return;
+  }
+  if (el.dataset.cat) {
+    const c = ewaste.find(x => x.id === el.dataset.cat); if (!c) return;
+    setDoc(doc(db, "ewaste", c.id), { [el.dataset.rf]: parseFloat(el.value) || 0, updatedAt: Date.now(), updatedBy: user.email }, { merge: true })
+      .then(() => toast(c.name + " ka rate save ho gaya")).catch(err => toast("Save error: " + (err.code || err.message)));
+  }
 });
+function focusQty(i) { setTimeout(() => { const q = document.querySelector(`[data-li="${i}"][data-f="qty"]`); if (q) { q.scrollIntoView({ block: "center" }); q.focus(); } }, 80); }
+function openCatQuick() {
+  openSub(`<h3>Nayi category</h3><label>Naam</label><input id="qc_name" placeholder="RAM, Processor, TV kit ...">
+    <label>Unit</label><select id="qc_unit"><option value="kg">Per kg</option><option value="pc">Per piece</option></select>
+    <label>Kharid rate ₹</label><input id="qc_buy" inputmode="decimal"><label>Bikri rate ₹</label><input id="qc_sell" inputmode="decimal">
+    <div class="row" style="margin-top:10px"><button class="btn grow" data-act="closeSub">Cancel</button><button class="btn primary grow" data-act="qcSave">Save + jodo</button></div>`);
+}
+function qcSave() {
+  const name = $("#qc_name").value.trim(); if (!name) { toast("Naam likho"); return; }
+  const c = { id: newId(), name, unit: $("#qc_unit").value, buyRate: parseFloat($("#qc_buy").value) || 0, rate: parseFloat($("#qc_sell").value) || 0, updatedAt: Date.now(), updatedBy: user.email };
+  setDoc(doc(db, "ewaste", c.id), c).catch(e => toast("Save error: " + (e.code || e.message)));
+  ewaste = [...ewaste, c].sort((x, y) => x.name.localeCompare(y.name));
+  closeSub();
+  if (draft) { draft.lines.push(ewLineFor(c, draft.type)); renderLines(); saveDraft(true); focusQty(draft.lines.length - 1); }
+}
+function guardDraft() {
+  const d = loadDraft();
+  if (d && !draft && confirm("Ek adhura bill pada hai. OK = use resume karo, Cancel = naya bill (purana hat jayega)")) { resumeDraft(); return true; }
+  return false;
+}
+function startScrap(type) { if (!guardDraft()) openScrap({ type }); }
+function openNewBillChoice() {
+  openModal(`<h3>Naya bill</h3><div class="row" style="flex-direction:column">
+    <button class="btn primary" data-act="newdrivebill">🧾 Drive bill (bikri)</button>
+    <button class="btn" data-act="scrapbuy">♻ Scrap KHARID bill</button>
+    <button class="btn" data-act="scrapsale">♻ Scrap BIKRI bill</button>
+    <button class="btn" data-act="closeModal">Cancel</button></div>`);
+}
 function openPicker() {
   const used = new Set(draft.lines.filter(l => l.t === "drive").map(l => l.driveId));
   const avail = items.filter(i => i.status === "In Stock" && !used.has(i.id)).sort((a, b) => b.createdAt - a.createdAt);
@@ -629,18 +784,30 @@ async function scanAdd() {
 }
 async function saveBill(andPdf) {
   if (!draft) return;
+  const type = draft.type || "sale";
   const buyer = $("#b_buyer").value.trim();
   const lines = draft.lines.map(l => ({ ...l, qty: +l.qty || 0, rate: +l.rate || 0 }));
   if (!lines.length) { toast("Kam se kam ek item jodo"); return; }
-  if (lines.some(l => l.qty <= 0)) { toast("Quantity 0 se zyada honi chahiye"); return; }
-  if (lines.some(l => l.t === "custom" && !l.desc.trim())) { toast("Custom item ka naam likho"); return; }
-  const total = billTotal(lines);
-  if (total <= 0) { toast("Rate daalo, total 0 hai"); return; }
+  const bad = lines.map((l, i) => lineBad(l) ? i : -1).filter(i => i >= 0);
+  if (bad.length) {
+    draft.showBad = true; renderLines();
+    const first = $("#ln_" + bad[0]); if (first) first.scrollIntoView({ block: "center" });
+    toast(bad.length + " item mein qty ya rate baaki hai. Lal wale bharo."); return;
+  }
   const existing = draft.id ? bills.find(b => b.id === draft.id) : null;
+  for (const l of lines) if (l.t === "drive") {
+    const it = items.find(x => x.id === l.driveId);
+    if (!it || (it.status !== "In Stock" && !(existing && existing.lines.some(x => x.driveId === l.driveId)))) { toast("Drive " + l.desc + " ab stock mein nahi hai. Use hata do."); return; }
+  }
+  const changes = [];
+  for (const l of lines) if (l.t === "ewaste") { const c = ewaste.find(x => x.id === l.catId); if (c && Math.abs(catRate(c, type) - l.rate) > 0.0001) changes.push({ c, l }); }
+  const updateCats = changes.length && confirm("Rate badle hain:\n" + changes.map(x => `${x.c.name}: ₹${fq(catRate(x.c, type))} → ₹${fq(x.l.rate)}`).join("\n") + "\n\nCategory ka " + (type === "buy" ? "kharid" : "bikri") + " rate bhi yahi kar dein?");
+  const total = billTotal(lines);
   const bill = existing ? { ...existing } : { id: newId(), createdAt: Date.now(), invoiceNo: "", date: today() };
-  Object.assign(bill, { buyer, buyerPhone: $("#b_phone").value.trim(), payment: $("#b_pay").value, notes: $("#b_notes").value.trim(), showPhotos: $("#b_photos").checked, lines, total, updatedAt: Date.now(), updatedBy: user.email });
-  closeModal();
-  if (!bill.invoiceNo) { try { bill.invoiceNo = await withTimeout(nextInvoiceNo(), 8000); } catch { toast("Invoice number ke liye internet chahiye. Bill save hua, number baad mein lagega."); } }
+  const ph = $("#b_photos");
+  Object.assign(bill, { type, buyer, buyerPhone: $("#b_phone").value.trim(), payment: $("#b_pay").value, notes: $("#b_notes").value.trim(), showPhotos: ph ? ph.checked : false, lines, total, updatedAt: Date.now(), updatedBy: user.email });
+  draft = null; clearDraftStore(); closeModal();
+  if (!bill.invoiceNo) { try { bill.invoiceNo = await withTimeout(nextInvoiceNo(type), 8000); } catch { toast("Bill number ke liye internet chahiye. Bill save hua, number baad mein lagega."); } }
   const batch = writeBatch(db), now = Date.now(), ids = new Set();
   batch.set(doc(db, "bills", bill.id), bill);
   for (const l of lines) if (l.t === "drive") {
@@ -651,6 +818,7 @@ async function saveBill(andPdf) {
     const it = items.find(x => x.id === l.driveId);
     if (it) batch.set(doc(db, "drives", it.id), { ...it, status: "In Stock", soldDate: "", invoiceNo: "", updatedAt: now, updatedBy: user.email });
   }
+  if (updateCats) for (const x of changes) batch.set(doc(db, "ewaste", x.c.id), { [type === "buy" ? "buyRate" : "rate"]: x.l.rate, updatedAt: now, updatedBy: user.email }, { merge: true });
   batch.commit().catch(e => toast("Save error: " + (e.code || e.message)));
   toast("Bill save ho gaya");
   if (andPdf && bill.invoiceNo) makePdf(bill);
@@ -683,7 +851,8 @@ function openCat(id) {
   openModal(`<h3>${c ? "Category edit" : "Nayi category"}</h3>
     <label>Naam</label><input id="c_name" value="${esc(c ? c.name : "")}" placeholder="RAM, Processor, TV kit ...">
     <label>Rate kis hisaab se</label><select id="c_unit"><option value="pc"${c && c.unit === "pc" ? " selected" : ""}>Per piece</option><option value="kg"${c && c.unit === "kg" ? " selected" : ""}>Per kg</option></select>
-    <label>Rate ₹</label><input id="c_rate" inputmode="decimal" value="${c ? esc(fq(c.rate)) : ""}">
+    <label>Kharid rate ₹ (aap kitne mein lete ho)</label><input id="c_buy" inputmode="decimal" value="${c && c.buyRate ? esc(fq(c.buyRate)) : ""}">
+    <label>Bikri rate ₹ (aap kitne mein bechte ho)</label><input id="c_rate" inputmode="decimal" value="${c && c.rate ? esc(fq(c.rate)) : ""}">
     <div class="row" style="margin-top:12px"><button class="btn grow" data-act="closeModal">Cancel</button>
     ${c ? `<button class="btn danger grow" data-act="catdel" data-id="${c.id}">Delete</button>` : ""}
     <button class="btn primary grow" data-act="catsave">Save</button></div>`);
@@ -691,13 +860,13 @@ function openCat(id) {
 function saveCat() {
   const name = $("#c_name").value.trim(); if (!name) { toast("Naam likho"); return; }
   const c = editing ? { ...editing } : { id: newId() };
-  Object.assign(c, { name, unit: $("#c_unit").value, rate: parseFloat($("#c_rate").value) || 0, updatedAt: Date.now(), updatedBy: user.email });
+  Object.assign(c, { name, unit: $("#c_unit").value, buyRate: parseFloat($("#c_buy").value) || 0, rate: parseFloat($("#c_rate").value) || 0, updatedAt: Date.now(), updatedBy: user.email });
   closeModal(); setDoc(doc(db, "ewaste", c.id), c).catch(e => toast("Save error: " + (e.code || e.message)));
 }
 function seedCats() {
   const have = new Set(ewaste.map(c => c.name.toLowerCase())), batch = writeBatch(db);
   let n = 0;
-  for (const name of COMMON_CATS) if (!have.has(name.toLowerCase())) { const id = newId() + n; n++; batch.set(doc(db, "ewaste", id), { id, name, unit: /kg|scrap|wire|battery/i.test(name) ? "kg" : "pc", rate: 0, updatedAt: Date.now(), updatedBy: user.email }); }
+  for (const name of COMMON_CATS) if (!have.has(name.toLowerCase())) { const id = newId() + n; n++; batch.set(doc(db, "ewaste", id), { id, name, unit: /kg|scrap|wire|battery/i.test(name) ? "kg" : "pc", rate: 0, buyRate: 0, updatedAt: Date.now(), updatedBy: user.email }); }
   if (!n) { toast("Saari common categories pehle se hain"); return; }
   batch.commit().then(() => toast(n + " categories judi. Ab rate daalo.")).catch(e => toast("Error: " + (e.code || e.message)));
 }
@@ -706,15 +875,17 @@ function seedCats() {
 function openShop() {
   const f = (id, label, val, extra = "") => `<label>${label}</label><input id="${id}" value="${esc(val)}" ${extra}>`;
   openModal(`<h3>Shop & invoice settings</h3>
-    ${f("sh_name", "Shop name", shop.name)}${f("sh_addr", "Address", shop.address)}${f("sh_phone", "Phone", shop.phone, 'type="tel"')}
+    ${f("sh_name", "Shop name", shop.name)}${f("sh_addr", "Address", shop.address)}${f("sh_phone", "Phone / WhatsApp", shop.phone, 'type="tel"')}
     ${f("sh_gstin", "GSTIN (optional)", shop.gstin)}
     ${f("sh_gst", "GST % (price GST-inclusive maana jayega, 0 = no GST)", shop.gstPercent, 'inputmode="decimal"')}
-    ${f("sh_prefix", "Invoice prefix", shop.prefix)}${f("sh_next", "Next invoice number", shop.nextNo, 'inputmode="numeric"')}
+    ${f("sh_prefix", "Invoice prefix (bikri)", shop.prefix)}${f("sh_next", "Next invoice number", shop.nextNo, 'inputmode="numeric"')}
+    ${f("sh_prefixb", "Kharid bill prefix", shop.prefixBuy || "PUR-")}${f("sh_nextb", "Next kharid bill number", shop.nextBuyNo || 1, 'inputmode="numeric"')}
     <div class="row" style="margin-top:12px"><button class="btn grow" data-act="closeModal">Cancel</button><button class="btn primary grow" data-act="saveShop">Save</button></div>`);
 }
 function saveShop() {
   const g = id => $("#" + id).value.trim();
-  const s = { name: g("sh_name"), address: g("sh_addr"), phone: g("sh_phone"), gstin: g("sh_gstin").toUpperCase(), gstPercent: g("sh_gst"), prefix: g("sh_prefix") || "INV-", nextNo: Math.max(1, parseInt(g("sh_next")) || 1) };
+  const s = { name: g("sh_name"), address: g("sh_addr"), phone: g("sh_phone"), gstin: g("sh_gstin").toUpperCase(), gstPercent: g("sh_gst"), prefix: g("sh_prefix") || "INV-", nextNo: Math.max(1, parseInt(g("sh_next")) || 1),
+    prefixBuy: g("sh_prefixb") || "PUR-", nextBuyNo: Math.max(1, parseInt(g("sh_nextb")) || 1) };
   shop = { ...shop, ...s };
   setDoc(doc(db, "settings", "shop"), s, { merge: true }).catch(e => toast("Save error: " + (e.code || e.message)));
   closeModal(); toast("Settings save ho gayi"); scheduleSync();
@@ -742,11 +913,12 @@ async function makePdf(bill) {
   if (!window.jspdf) { toast("PDF library load nahi hui. Internet on karke page reload karo."); return; }
   bill = { ...bill };
   if (!bill.invoiceNo) {
-    try { bill.invoiceNo = await withTimeout(nextInvoiceNo(), 8000); persistNo(bill).catch(() => {}); }
+    try { bill.invoiceNo = await withTimeout(nextInvoiceNo(bill.type), 8000); persistNo(bill).catch(() => {}); }
     catch { toast("Invoice number ke liye internet chahiye."); return; }
   }
   try {
     const pdf = new window.jspdf.jsPDF({ unit: "pt", format: "a4" });
+    const buy = bill.type === "buy";
     const W = 595, M = 40, R = W - M, BOTTOM = 770;
     pdf.setTextColor(23, 43, 77);
     const font = (size, bold) => { pdf.setFont("helvetica", bold ? "bold" : "normal"); pdf.setFontSize(size); };
@@ -754,14 +926,14 @@ async function makePdf(bill) {
     const split = (s, w, size, bold) => { font(size, bold); return pdf.splitTextToSize(String(s), w); };
     const wrap = (s, x, y, w, size = 12, bold = false) => { const ls = split(s, w, size, bold); pdf.text(ls, x, y + size); return y + ls.length * size * 1.25; };
     let y = 62;
-    text(shop.name || "Silicon Traders", M, 55, 20, true); text("INVOICE", R, 55, 20, true, "right");
+    text(shop.name || "Silicon Traders", M, 55, 20, true); text(buy ? "PURCHASE BILL" : "INVOICE", R, 55, 20, true, "right");
     if (shop.address) y = wrap(shop.address, M, y, 300, 11);
     if (shop.phone) y = wrap("Phone: " + shop.phone, M, y, 300, 11);
     if (shop.gstin) y = wrap("GSTIN: " + shop.gstin, M, y, 300, 11);
-    text("Invoice No: " + bill.invoiceNo, R, 80, 12, false, "right"); text("Date: " + bill.date, R, 98, 12, false, "right"); text("Payment: " + bill.payment, R, 116, 12, false, "right");
+    text((buy ? "Bill No: " : "Invoice No: ") + bill.invoiceNo, R, 80, 12, false, "right"); text("Date: " + bill.date, R, 98, 12, false, "right"); text((buy ? "Paid via: " : "Payment: ") + bill.payment, R, 116, 12, false, "right");
     y = Math.max(y, 128) + 8; pdf.setDrawColor(176, 190, 197); pdf.line(M, y, R, y); y += 18;
-    text("BILL TO", M, y, 10, true); y += 4;
-    y = wrap(bill.buyer || "Walk-in customer", M, y, 300, 13, true);
+    text(buy ? "PURCHASED FROM" : "BILL TO", M, y, 10, true); y += 4;
+    y = wrap(bill.buyer || (buy ? "Seller (naam nahi diya)" : "Walk-in customer"), M, y, 300, 13, true);
     if (bill.buyerPhone) y = wrap("Phone: " + bill.buyerPhone, M, y, 300, 11);
     y += 14;
     const tableHeader = () => {
@@ -782,7 +954,7 @@ async function makePdf(bill) {
     });
     if (y + 110 > BOTTOM) { pdf.addPage(); y = 50; }
     y += 14;
-    const total = bill.lines.reduce((a, l) => a + l.qty * l.rate, 0), gst = num(shop.gstPercent);
+    const total = bill.lines.reduce((a, l) => a + l.qty * l.rate, 0), gst = buy ? 0 : num(shop.gstPercent);
     if (gst > 0) {
       const taxable = total / (1 + gst / 100), tax = total - taxable;
       text("Taxable value", 400, y, 11); text(m2(taxable), R - 6, y, 11, false, "right"); y += 16;
@@ -810,11 +982,11 @@ async function makePdf(bill) {
       }
     }
     if (y + 40 > BOTTOM) { pdf.addPage(); y = 50; }
-    text("Thank you for your purchase.", M, y + 8, 12, true);
+    text(buy ? "Thank you." : "Thank you for your purchase.", M, y + 8, 12, true);
     text("Warranty, if any, is as stated above.", M, y + 24, 9);
     const n = pdf.getNumberOfPages();
     for (let p = 1; p <= n; p++) { pdf.setPage(p); text("Powered by Silicon Traders", W / 2, 820, 10, true, "center"); text(`Page ${p} of ${n}`, R, 820, 9, false, "right"); }
-    await shareOrDownload(pdf.output("blob"), "Invoice_" + bill.invoiceNo.replace(/[^A-Za-z0-9_-]/g, "_") + ".pdf", "Invoice " + bill.invoiceNo);
+    await shareOrDownload(pdf.output("blob"), (buy ? "Purchase_" : "Invoice_") + bill.invoiceNo.replace(/[^A-Za-z0-9_-]/g, "_") + ".pdf", (buy ? "Purchase bill " : "Invoice ") + bill.invoiceNo);
   } catch (e) { toast("Invoice error: " + e.message); }
 }
 
@@ -905,7 +1077,7 @@ const publicLink = () => new URL("stock.html", location.href).href;
 function listText() {
   const list = publicItems();
   let t = `*${shop.name || "Silicon Traders"} - Stock List*\n(${today()})\n\n`;
-  list.forEach((i, n) => { t += `${n + 1}. ${i.kind} ${i.brandModel} ${i.capacity}`.replace(/\s+/g, " ") + ` - *${num(i.sellPrice) ? "₹" + m0(num(i.sellPrice)) : "Call for price"}*\n`; });
+  list.forEach((i, n) => { t += `${n + 1}. ${i.kind} ${i.brandModel} ${i.capacity}`.replace(/\s+/g, " ") + ` - *${num(i.sellPrice) ? "₹" + m0(num(i.sellPrice)) : "DM for price"}*\n`; });
   t += `\n✅ ON SALE\nPhotos ke saath poori list: ${publicLink()}`;
   if (shop.phone) t += `\nCall / WhatsApp: ${shop.phone}`;
   return t;
@@ -935,9 +1107,9 @@ function openShare() {
 const byId = id => items.find(x => x.id === id);
 const actions = {
   tab: d => { tab = d.v; render(); },
-  fab: () => tab === "stock" ? openEditor(null) : tab === "bills" ? openBill() : openCat(null),
+  fab: () => tab === "stock" ? openEditor(null) : tab === "bills" ? openNewBillChoice() : startScrap("buy"),
   add: () => openEditor(null), edit: d => openEditor(d.id),
-  sell: d => openBill({ driveId: d.id }),
+  sell: d => { if (!guardDraft()) openBill({ driveId: d.id }); },
   stock: d => revertDrive(d.id),
   del: d => { const it = byId(d.id); if (it && confirm("Delete karein?\n" + it.brandModel + " • " + it.serial)) deleteDoc(doc(db, "drives", d.id)).catch(e => toast("Delete error: " + (e.code || e.message))); },
   invoice: d => { const it = byId(d.id); if (!it) return; const b = billOfDrive(it.id); makePdf(b || billFromDrive(it)); },
@@ -946,16 +1118,28 @@ const actions = {
   scanserial: async () => { const v = await scanBarcode(); if (v && $("#f_serial")) $("#f_serial").value = v; },
   labelscan: () => $("#f_scan").click(), cam: () => $("#f_cam").click(), gal: () => $("#f_gal").click(),
   rmph: d => { editPhotos.splice(+d.i, 1); renderThumbs(); },
-  saveEditor, closeModal, closeSub,
+  saveEditor, closeModal: () => closeModal(), closeSub: () => closeSub(),
   billpdf: d => { const b = bills.find(x => x.id === d.id); if (b) makePdf(b); },
-  billedit: d => openBill({ billId: d.id }), billdel: d => deleteBill(d.id),
+  billedit: d => { const b = bills.find(x => x.id === d.id); if (b) { if (isScrapBill(b)) openScrap({ billId: b.id }); else openBill({ billId: b.id }); } }, billdel: d => deleteBill(d.id),
   addDrive: openPicker, pickDone, scanadd: scanAdd,
-  addEw: () => { const l = ewLine(); if (!l) { toast("Pehle E-waste tab mein category banao"); return; } draft.lines.push(l); renderLines(); },
-  addCustom: () => { draft.lines.push({ t: "custom", driveId: "", catId: "", desc: "", spec: "", serial: "", unit: "pc", qty: 1, rate: 0 }); renderLines(); },
-  rmline: d => { draft.lines.splice(+d.i, 1); renderLines(); },
+  addEw: () => { const l = ewLine(); if (!l) { toast("Pehle E-waste tab mein category banao"); return; } draft.lines.push(l); renderLines(); saveDraft(true); },
+  addCustom: () => { draft.lines.push({ t: "custom", driveId: "", catId: "", desc: "", spec: "", serial: "", unit: "pc", qty: 1, rate: 0 }); renderLines(); saveDraft(true); },
+  rmline: d => { draft.lines.splice(+d.i, 1); renderLines(); saveDraft(true); },
   saveBill: () => saveBill(false), saveBillPdf: () => saveBill(true),
   catedit: d => openCat(d.id), catsave: saveCat, catdel: d => { if (confirm("Category delete karein?")) { deleteDoc(doc(db, "ewaste", d.id)); closeModal(); } },
-  seedcats: seedCats, ewbill: () => openBill({ ewaste: true }),
+  seedcats: seedCats, newcat: () => openCat(null),
+  scrapbuy: () => startScrap("buy"), scrapsale: () => startScrap("sale"), newdrivebill: () => { if (!guardDraft()) openBill(); },
+  stype: d => { if (!draft || draft.type === d.v) return; draft.type = d.v; draft.lines.forEach(l => { if (l.t === "ewaste") { const c = ewaste.find(x => x.id === l.catId); if (c) l.rate = catRate(c, d.v); } }); renderLines(); saveDraft(true); },
+  tile: d => {
+    const c = ewaste.find(x => x.id === d.id); if (!c || !draft) return;
+    let i = draft.lines.findIndex(l => l.t === "ewaste" && l.catId === c.id);
+    if (i < 0) { draft.lines.push(ewLineFor(c, draft.type)); i = draft.lines.length - 1; renderLines(); saveDraft(true); }
+    focusQty(i);
+  },
+  scrapNewCat: openCatQuick, qcSave, bfilter: d => { billFilter = d.v; render(); },
+  resume: resumeDraft,
+  draftdel: () => { if (confirm("Adhura bill hata dein?")) { clearDraftStore(); renderDraftBar(); } },
+  draftdel2: () => { if (confirm("Ye adhura bill hata dein?")) closeModal(true); },
   share: openShare, copylink: () => copyText(publicLink()), copylist: () => copyText(listText()),
   wa: () => window.open("https://wa.me/?text=" + encodeURIComponent((shop.name || "Silicon Traders") + " - ON SALE stock list (photo aur price ke saath):\n" + publicLink()), "_blank"),
   walist: async () => { const tx = listText(); if (navigator.share) { try { await navigator.share({ text: tx }); return; } catch (e) { if (e.name === "AbortError") return; } } window.open("https://wa.me/?text=" + encodeURIComponent(tx), "_blank"); },

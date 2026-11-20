@@ -1,4 +1,4 @@
-const CACHE = "hddbm-v31";
+const CACHE = "hddbm-v32";
 const CORE = ["./", "./index.html", "./stock.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 const EXT = [
   "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",

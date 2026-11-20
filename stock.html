@@ -38,7 +38,7 @@ input,select{padding:10px;border:1px solid var(--line);border-radius:10px;font-s
 .cap{font-size:13px;color:var(--muted)}
 .price{font-size:23px;font-weight:800;color:var(--green);margin-top:4px}
 .price small{font-size:12px;font-weight:600;color:var(--muted);margin-right:3px}
-.call{font-size:15px;font-weight:700;color:var(--muted);margin-top:6px}
+.call{display:inline-block;align-self:flex-start;background:#fff3e0;color:#e65100;font-weight:800;font-size:15px;padding:5px 11px;border-radius:8px;margin-top:6px}
 .ask{margin-top:auto;text-align:center;padding:9px;border-radius:9px;background:#e8f7ee;color:#127a33;font-weight:700;text-decoration:none;font-size:13.5px}
 .empty{text-align:center;color:var(--muted);padding:50px 10px}
 footer{text-align:center;color:var(--muted);font-size:12.5px;padding:20px 10px 30px}
@@ -110,8 +110,8 @@ function render() {
       ${ph ? `<img loading="lazy" src="${ph}" alt="">` : "💽"}<span class="ribbon">ON SALE</span>${(i.photos || []).length > 1 ? `<span class="cnt">📷 ${i.photos.length}</span>` : ""}</div>
       <div class="body"><div class="kind">${esc(i.kind)}</div><div class="name">${esc(i.brandModel)}</div>
       <div class="cap">${esc(i.capacity)}${i.condition ? " • " + esc(i.condition) : ""}${i.warranty ? "<br>Warranty: " + esc(i.warranty) : ""}</div>
-      ${i.sellPrice > 0 ? `<div class="price"><small>Price</small>${rupee(i.sellPrice)}</div>` : `<div class="call">Price ke liye call karo</div>`}
-      ${n ? `<a class="ask" href="https://wa.me/${n}?text=${msg}">WhatsApp par poochho</a>` : ""}</div></div>`;
+      ${i.sellPrice > 0 ? `<div class="price"><small>Price</small>${rupee(i.sellPrice)}</div>` : `<div class="call">DM for price</div>`}
+      ${n ? `<a class="ask" href="https://wa.me/${n}?text=${msg}">${i.sellPrice > 0 ? "WhatsApp par poochho" : "DM for price on WhatsApp"}</a>` : ""}</div></div>`;
   }).join("") : `<div class="empty" style="grid-column:1/-1">${list.length ? "Koi drive nahi mila." : "Abhi stock update ho raha hai. Thodi der baad dekhein."}</div>`;
 }
 onSnapshot(collection(db, "public_stock"), s => { list = s.docs.map(d => d.data()); render(); },
